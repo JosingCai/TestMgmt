@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+
+{% block title %} 
+   {{ project }} Case Test Result Info 
+{% endblock %}
+
+{% block editContent %}
+{% endblock %}
+
+{% block tableContent %}
+    <table border="1" cellspacing="1" cellpadding="0">
+    <tr>
+        <th>Case_ID</th>
+         <th>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;APIFunction&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</th>
+       {# <th>http_method</th> #}
+       {# <th>path</th> #}
+        <th>url</th>
+        <th>body</th>
+        <th>TestContent</th>
+        <th>FailReason</th>
+        <th>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;TestTime&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</th>
+        <th>TestResult</th>
+    </tr>
+    {% for case in transList %}
+    <tr>
+        <td>{{ case.case_id }}</td>
+        <td>{{ case.APIFunction }}</td>
+        {# <td align="center">{{ case.http_method }}</td> #}
+        {# <td>{{ case.path }}</td> #}
+        <td>{{ case.url }}</td>
+        <td>{{ case.body }}</td>
+        <td>{{ case.response }}</td> 
+        <td>{{ case.failReason }}</td>
+        <td align="center">{{ case.testTime }}</td>
+        <td align="center">{{ case.testResult }}</td>
+        
+    </tr>
+    {% endfor %}
+    </table>
+{% endblock %}

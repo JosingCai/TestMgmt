@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+
+{% block title %} 
+   {{ project }} API Source Change Info 
+{% endblock %}
+
+{% block editContent %}
+{% endblock %}
+
+{% block tableContent %}
+    <tr>
+        <th>
+            <form method="post" action ="/{{ project }}/api/source_change/"> {% csrf_token %}
+                <input type="submit" name="name" value="全新更新"/>
+                <input type="hidden" name="value" value="{{ transList }}">
+        </form>
+        </th>
+        <th>case_id</th>
+        <th>old_raw</th>
+        <th>new_raw</th>
+    </tr>
+    {% for info in transList %}
+    <tr>
+        <form method="post" action ="/{{ project }}/api/source_change_one/"> {% csrf_token %}
+            <td><input type="submit" size="50" name={{ info.section }} value="确认更新"/></td>
+            <td align="center"><input type="text" size="30" name="section" value="{{ info.section }}"></td>
+            <td><input type="text" name="old_raw" size="100" value="{{ info.old_raw }}"></td>
+            <td><input type="text" name="new_raw" size="100" value="{{ info.new_raw }}"></td>
+        </form>
+    </tr>
+    {% endfor %}
+{% endblock %}

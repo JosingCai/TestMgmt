@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>AutoTest</title>
+</head>
+<body>
+    <td align="center"><a href="{{ LINK_PATH_HEAD }}/">主页</a></td>
+    <td align="center"><a href="{{ LINK_PATH_HEAD }}/{{ project }}/api/source/">源数据</a></td>
+    <td align="center"><a href="{{ LINK_PATH_HEAD }}/{{ project }}/api/case_detail/">用例详情</a></td>
+    <td align="center"><a href="{{ LINK_PATH_HEAD }}/{{ project }}/api/case_dep/">用例依赖</a></td>
+    <td align="center"><a href="{{ LINK_PATH_HEAD }}/{{ project }}/api/case_result/">用例结果</a></td>
+    <td align="center"><a href="{{ LINK_PATH_HEAD }}/{{ project }}/api/comVar/">公用变量</a></td>
+    {# <td align="center"><a href="{{ LINK_PATH_HEAD }}/{{ project }}/envConfig/">环境配置</a></td> #}
+    <td align="center"><a href="{{ LINK_PATH_HEAD }}/{{ project }}/api/result_detail/">测试详情</a></td>
+    <td align="center"><a href="{{ LINK_PATH_HEAD }}/{{ project }}/api/result_report/">测试报告</a></td>
+    <td align="center"><a href="{{ LINK_PATH_HEAD }}/{{ project }}/case/repo_list/">Issue同步</a></td>
+    <td align="center"><a href="{{ LINK_PATH_HEAD }}/{{ project }}/case/repo_issue/">Issue列表</a></td>
+    <td align="center"><a href="{{ LINK_PATH_HEAD }}/{{ project }}/case/test_plan_shecdule/">测试计划时间表</a></td>
+    {# <td align="center"><a href="{{ LINK_PATH_HEAD }}/report/">报表SQL</a></td> #}
+    {# <td align="center"><a href="{{ LINK_PATH_HEAD }}/report/sql/">SQL展示</a></td> #}
+
+    <h3>{% block title %}{% endblock %}</h3>
+
+    <div id="contes" style="">
+    <div>
+        {% block editContent %}{% endblock %}
+    </div>
+    </div>
+    <br>
+    <table border="1" cellspacing="1" cellpadding="0" style="table-layout:fixed;">
+    {% block tableContent %}{% endblock %}
+    </table>
+</body>
+</html>

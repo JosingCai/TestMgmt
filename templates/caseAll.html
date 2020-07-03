@@ -1,0 +1,90 @@
+{% extends 'base.html' %}
+
+{% block title %} 
+   {{ project }} Case Info 
+{% endblock %}
+
+{% block editContent %}
+        <form method="post" action ="/{{ project }}/api/case_dep/"> {% csrf_token %}
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;case_id:<input type="text" width=20 value='' name="case_id" placeholder='method_API' size="40" required="required"/>
+            numRun:<input type="text" width=20 value='1' name="numRun" placeholder='number' size="40" required="required"/>
+            <br>
+            beforeCase:
+            <textarea placeholder='["method_API1", "method_API2", ……]' name="beforeCase" cols="38" rows="3"></textarea>
+            outVars:
+            <textarea placeholder='{"name": "content-records-id"}' name="outVars" cols="38" rows="3"></textarea>
+            afterCase:
+            <textarea placeholder='["method_API1", "method_API2", ……]' name="afterCase" cols="38" rows="3"></textarea>
+            chkVars:
+            <textarea placeholder='' name="chkVars" cols="38" rows="3"></textarea>
+            param_def:
+            <textarea placeholder='["var_name1", "var_name2", ……]' name="param_def" cols="38" rows="3"></textarea>
+            <input type="submit" value="新增">
+        </form>
+{% endblock %}
+
+{% block tableContent %}
+    <form method="post" action ="/{{ project }}/api/case/dep/sync">
+        <input type="submit" value="同步"/>
+    </form>
+    <table border="1" cellspacing="1" cellpadding="0">
+    <tr>
+        <th colspan=2>
+            <form method="post" action ="/{{ project }}/api/case_run_all/">
+                <input type="submit" value="测试全部"/>
+            </form>
+        </th>
+        <th colspan=2>case_id</th>
+        <th>num</th>
+        <th>beforeCase</th>
+        <th>outVars</th>
+        <th>afterCase</th>
+        <th>chkVars</th>
+        <th>param_def</th>
+        <th>raw</th>
+        <th>requestVars</th>
+        <th>outVarsTest</th>
+        <th>result</th>
+    </tr>
+    {% for info in transList %}
+    <tr>
+        <td>
+            <form method="post" action ="/{{ project }}/api/case/run/">
+                <input type="submit" name={{ info.case_id }} value="测试"/>
+            </form>
+            <form method="get" action ="/{{ project }}/api/case/result/detail/">
+                <input type="submit" name={{ info.case_id }} value="结果详情"/>
+            </form>
+            <form method="post" action ="/{{ project }}/api/case/dep/remove/">
+                <input type="submit" name={{ info.case_id }} value="删除"/>
+            </form>
+            <form method="post" action ="/{{ project }}/api/case_dep/">
+                <td><input type="submit" name="modify" value="修改"/></td>
+                <td>{{ info.case_id }}</td>
+                <td><input type="hidden" name="case_id" value="{{ info.case_id }}" size="20"></td>
+                <td><textarea name="runNum" cols="3" rows="5"> {{ info.runNum }}</textarea></td>
+                <td><textarea name="beforeCase" cols="20" rows="5"> {{ info.beforeCase }}</textarea></td>
+                <td><textarea name="outVars" cols="20" rows="5"> {{ info.outVars }}</textarea></td>
+                <td><textarea name="afterCase" cols="20" rows="5"> {{ info.afterCase }}</textarea></td>
+                <td><textarea name="chkVars" cols="20" rows="5"> {{ info.chkVars }}</textarea></td>
+                <td><textarea name="param_def" cols="20" rows="5"> {{ info.param_def }}</textarea></td>
+                <td><textarea name="raw" cols="60" rows="5"> {{ info.raw }}</textarea></td>
+            </form>
+        </td>
+        <td>{{ info.requestVars }}</td>
+        <td>{{ info.outVarsTest }}</td>
+        <td>{{ info.result }}</td>
+    </tr>
+    {% endfor %}
+    </table>
+    </p>用例依赖使用说明：</p>
+    <textarea rows="10" cols="130" readonly="readonly" disabled="disabled">
+    1. 点击页面"同步"按钮，源数据里的API信息会同步到该页面，生成依赖框架，然后填写数据即可
+    2. 固定变量使用说明：
+       (1) beforeCase = ["get_/path1", "post_/path2", ……]: 执行该API时，先执行此处并联的API
+       (2) - outVars = {"name": "content-record-id", "id": "content-record-id"} :其他API依赖的数据由此处定义，返回数据全是字典的用"-"分割
+           - outVars = {"name": "content-record*id", "ids": "content-record*id"} :其他API依赖的数据由此处定义，返回数据中有列表的用"*"分割
+       (3) chkVars = {"name_id": "content-id"} : 如果post请求的数据,get查询时名称一样的，无需定义，名字不一样的需要转义
+       (4) afterCase = ["delete_/path", "get_/path"] : 请求完后，需要检查数据get方法，新增后需要删除的delete方法
+    </textarea>
+{% endblock %} 

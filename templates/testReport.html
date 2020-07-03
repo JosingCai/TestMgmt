@@ -1,0 +1,81 @@
+{% extends 'base.html' %}
+
+{% block title %} 
+   {{ project }} Case Test Report Info 
+{% endblock %}
+
+{% block editContent %}
+{% endblock %}
+
+{% block tableContent %}
+    <table border="1" cellspacing="1" cellpadding="0">
+    <tr>
+        <th>总结</th>
+        <th>API总数</th>
+        <th>可自动化总数</th>
+        <th>未自动化总数</th>
+        <th>自动测试</th>
+        <th>未测试</th>
+        <th>成功</th>
+        <th>失败</th>
+        <th>自动化率</th>
+        <th>成功率</th>
+        <th>失败率</th>
+    </tr>
+    <tr>
+        <td>SumUp</td>
+        <td align="center">{{ infoDict.allCount }}</td>
+        <td align="center">{{ infoDict.automatableCount }}</td>
+        <td align="center">{{ infoDict.unautomatableCount }}</td>
+        <td align="center">{{ infoDict.autoTestCount }}</td>
+        <td align="center">{{ infoDict.unTestCount }}</td>
+        <td align="center">{{ infoDict.passCount }}</td>
+        <td align="center">{{ infoDict.failCount }}</td>
+        <td align="center">{{ infoDict.autoPer }}</td>
+        <td align="center">{{ infoDict.passPer }}</td>
+        <td align="center">{{ infoDict.failPer }}</td>
+    </tr>
+    </table>
+    <br>
+    <table border="1" cellspacing="1" cellpadding="0">
+    <tr>
+        <th colspan=2>
+            <form method="post" action ="/{{ project }}/case/run/all">
+                <input type="submit" value="测试全部"/>
+            </form>
+        </th>
+        <th>Case_ID</th>
+         <th>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;APIFunction&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</th>
+         <th>RunTimes</th>
+        <th>TestTimes</th>
+        <th>PassTimes</th>
+        <th>FailTimes</th>
+        <th>UntestTimes</th>
+        <th>TestResult</th>
+        <th>FailReason</th>
+    </tr>
+    {% for info in transList %}
+    <tr>
+        <td>
+            <form method="post" action ="/{{ project }}/case/run">
+                <input type="submit" name={{ info.case_id }} value="测试"/>
+            </form>
+        </td>
+        <td>
+            <form method="get" action ="/{{ project }}/case/result/detail">
+                <input type="submit" name={{ info.case_id }} value="结果详情"/>
+            </form>
+        </td>
+        <td>{{ info.case_id }}</td>
+        <td>{{ info.APIFunction }}</td>
+        <td align="center">{{ info.runTimes }}</td>
+        <td align="center">{{ info.testTimes }}</td>
+        <td align="center">{{ info.passTimes }}</td>
+        <td align="center">{{ info.failTimes }}</td>
+        <td align="center">{{ info.untestTimes }}</td>
+        <td align="center">{{ info.testResult }}</td>
+        <td>{{ info.FailReason }}</td>
+    </tr>
+    {% endfor %}
+    </table>
+{% endblock %}

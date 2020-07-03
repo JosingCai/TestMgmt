@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+
+{% block title %} 
+   {{ project }} Report Info 
+{% endblock %}
+
+{% block editContent %}
+        
+{% endblock %}
+
+{% block tableContent %}
+    <table border="1" cellspacing="1" cellpadding="0">
+    <p>{{ table_info.cn_name }} : {{ table_info.en_name }}</p>
+    <tr>
+        <form action="/report/sql" method="post">
+          <input type="submit" value="确认" />
+            <p><input type="radio" name="sql_type" value="bar_graph" /> 柱状
+               <input type="radio" name="sql_type" value="pie_chart" /> 饼图
+               <input type="radio" name="sql_type" value="scatter_diagram" /> 散点图
+               <input type="radio" name="sql_type" value="line_chart" /> 拆线图
+            </p>
+    {% for info in transList %}
+            <p><input type="checkbox" name="item" value={{ info.en_name }} /> 
+               <input type="checkbox" name="sorting" value={{ info.en_name }} /> 
+               {{ info.cn_name }}   {{ info.en_name }} </p>
+    {% endfor %}
+        <input type="hidden" name="cn_name" value={{ table_info.cn_name }}></input>
+        <input type="hidden" name="en_name" value={{ table_info.en_name }}></input>
+       </form>
+    </tr>
+    </table>
+    <table border="1" cellspacing="1" cellpadding="0">
+    <tr>
+        <th>item</th>
+        <th>sort</th>
+        <th>cn_name</th>
+        <th>en_name</th>
+    </tr>
+</table>
+</p>使用说明：</p>
+    <textarea rows="6" cols="60" readonly="readonly" disabled="disabled">
+    必选：
+    （1）图的类型（单选框）
+    （2）选择要展示的字段（多选：第一列复选框）
+    （3）以哪些字段作为排序（多选：第二列复选框）
+    </textarea>
+{% endblock %} 

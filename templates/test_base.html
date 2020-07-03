@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+</head>
+    <title>AutoTest</title>
+<body>
+    <td align="center"><a href="{{ LINK_PATH_HEAD }}/">主页</a></td>
+    {% for item in modules %}
+    <td align="center"><a href="{{ LINK_PATH_HEAD }}/{{ project }}/case/{{ item }}/">{{ item }}</a></td>
+    {% endfor %}
+
+    <h3>{% block title %}{% endblock %}</h3>
+
+    <div id="contes" style="">
+    <div>
+        {% block editContent %}{% endblock %}
+    </div>
+    </div>
+    <br>
+    <table border="1" cellspacing="1" cellpadding="0" style="table-layout:fixed;">
+    {% block tableContent %}{% endblock %}
+    </table>
+</body>
+</html>

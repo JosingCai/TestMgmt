@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+
+{% block title %} 
+   {{ project }} Case Test Result Info 
+{% endblock %}
+
+{% block editContent %}
+{% endblock %}
+
+{% block tableContent %}
+    <table border="1" cellspacing="1" cellpadding="0">
+    <tr>
+        <th colspan=3>
+            <form method="post" action ="/{{ project }}/api/case_run_all/">
+                <input type="submit" value="全部重测"/>
+            </form></th>
+        <th>case_id</th>
+        <th>requestVars</th>
+        <th>outVarsTest</th>
+        <th>result</th>
+    </tr>
+    {% for info in transList %}
+    <tr>
+        <td>
+            <form method="post" action ="/{{ project }}/api/case_run/">
+                <input type="submit" name={{ info.case_id }} value="再测一次"/>
+            </form>
+        </td>
+        <td>
+            <form method="post" action ="/{{ project }}/api/case/result/remove">
+                <input type="submit" name={{ info.case_id }} value="删除结果"/>
+            </form>
+        </td>
+        <td>
+            <form method="get" action ="/{{ project }}/api/case/result/detail">
+                <input type="submit" name={{ info.case_id }} value="结果详情"/>
+            </form>
+        </td>
+        <td>{{ info.case_id }}</td>
+        <td>{{ info.requestVars }}</td>
+        <td>{{ info.outVarsTest }}</td>
+        <td>{{ info.result }}</td>
+    </tr>
+    {% endfor %}
+    </table>
+{% endblock %}

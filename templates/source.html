@@ -1,0 +1,90 @@
+{% extends 'base.html' %}
+
+{% block title %} 
+   {{ project }} API Source Info 
+{% endblock %}
+
+{% block editContent %}
+<form method="post" action ="/{{ project }}/api/source/"> {% csrf_token %}
+   APIFunction:&nbsp;<input type="text" width=20 value='' name="APIFunction" placeholder='API Description' size="40"/>
+    &nbsp;protocol:&nbsp;
+    <select name="protocol" style="width:245px;">
+        <option value ="http">http</option>
+        <option value ="https">https</option>
+    </select>
+    http_method:&nbsp;<select name="http_method" style="width:245px;">
+        <option value ="get">get</option>
+        <option value ="post">post</option>
+        <option value ="put">put</option>
+        <option value ="delete">delete</option>
+    </select><br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;path:&nbsp;<textarea name="path" cols="38" rows="4" required></textarea>
+    &nbsp;&nbsp;&nbsp;header:&nbsp;<textarea name="header" cols="38" rows="4"></textarea>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;pathVar:&nbsp;<textarea name="pathVar" cols="38" rows="4"></textarea><br>
+    queryParam:&nbsp;<textarea name="queryParam" cols="38" rows="4"></textarea>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;body:&nbsp;<textarea name="body" cols="38" rows="4"></textarea>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;response:&nbsp;<textarea name="response" cols="38" rows="4"></textarea>
+    <input type="submit" value="新增">
+</form>
+{% if messages %}
+        <script>
+            {% for msg in messages %}
+                alert('{{ msg.message }}');
+            {% endfor %}
+        </script>
+{% endif %}
+{% endblock %}
+
+{% block tableContent %}
+    <form method="post" action ="/{{ project }}/api/source_auto/"> {% csrf_token %}
+        <input type="submit" value="自动生成"/>
+    </form>
+    <tr>
+        <th>
+            <form method="post" action ="/{{ project }}/api/case_run_all/"> {% csrf_token %}
+                <input type="submit" value="测试全部"/>
+            </form>
+        </th>
+        <th>case_id</th>
+        <th>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;APIFunction&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</th>
+        <th>protocol</th>
+        <th>http_method</th>
+        <th>path</th>
+        <th>header</th>
+        <th>pathVar</th>
+        <th>queryParam</th>
+        <th>body</th>
+        <th>response</th>
+        <th>relation</th>
+    </tr>
+    {% for info in transList %}
+    <tr>
+        <td align="center">
+            <form method="post" action ="/{{ project }}/api/case_run/"> {% csrf_token %}
+                <input type="submit" name={{ info.case_id }} value="测试"/>
+            </form>
+            <form method="post" action ="/{{ project }}/api/source_change/"> {% csrf_token %}
+                <input type="submit" name={{ info.case_id }} value="修改"/>
+            </form>
+        </td>
+        <td>{{ info.case_id }}</td>
+        <td>{{ info.APIFunction }}</td>
+        <td align="center">{{ info.protocol }}</td>
+        <td align="center">{{ info.http_method }}</td>
+        <td>{{ info.path }}</td>
+        <td>{{ info.header }}</td>
+        <td>{{ info.pathVar }}</td>
+        <td>{{ info.queryParam }}</td>
+        <td>{{ info.body }}</td>
+        <td>{{ info.response }}</td>
+        <td align="center"> 
+            <form method="get" action ="/{{ project }}/api/case_dep/">
+                <input type="submit" name={{ info.case_id }} value="依赖"/>
+            </form>
+            <form method="get" action ="/{{ project }}/api/result_detail/">
+                <input type="submit" name={{ info.case_id }} value="结果详情"/>
+            </form>
+        </td>
+    </tr>
+    {% endfor %}
+{% endblock %} 

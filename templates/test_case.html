@@ -1,0 +1,158 @@
+{% extends 'test_base.html' %}
+
+{% block title %} 
+   {{ project }} Test Case Info 
+{% endblock %}
+
+{% block editContent %}
+<form method="post" action ="/{{ project }}/case/{{ module }}/"> {% csrf_token %}
+    &nbsp;&nbsp;&nbsp;用例编号:<input type="text" width=20 value='' name="case_num" placeholder='' size="40"/>
+    &nbsp;&nbsp;&nbsp;用例名称:<input type="text" width=20 value='' name="case_name" placeholder='' size="40"/>
+    &nbsp;&nbsp;&nbsp;测试类型:
+    <select name="case_type" style="width:245px;">
+        <option value ="base_fun">基本功能测试</option>
+        <option value ="scene">场景测试</option>
+        <option value ="abnormal">异常测试</option>
+        <option value ="longtime">长时间测试</option>
+        <option value ="pressure">压力测试</option>
+        <option value ="ui_interactive">UI交互测试</option>
+        <option value ="security">安全测试</option>
+    </select><br>
+    &nbsp;&nbsp;&nbsp;预置条件:<textarea name="pre_condition" cols="38" rows="4"></textarea>
+    &nbsp;&nbsp;&nbsp;测试范围:<textarea name="test_range" cols="39" rows="4"></textarea>
+    &nbsp;&nbsp;&nbsp;测试步骤:<textarea name="test_steps" cols="39" rows="4"></textarea>
+    &nbsp;&nbsp;&nbsp;预期结果:<textarea name="expected_result" cols="39" rows="4"></textarea><br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;优先级:&nbsp;<select name="priority" style="width:245px;">
+        <option value ="level0">Level0</option>
+        <option value ="level1">Level1</option>
+        <option value ="level2">Level2</option>
+        <option value ="level3">Level3</option>
+        <option value ="level4">Level4</option>
+        <option value ="level5">Level5</option>
+    </select>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;自动化:<select name="auto_test" style="width:245px;">
+        <option value ="yes">是</option>
+        <option value ="no">否</option>
+    </select>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;关联API:<input type="text" value='' name="related_api" placeholder='' size="40" /><br>
+    功能开发者:<select name="fun_dev" style="width:245px;">
+        <option value ="tangtianyun">汤天云</option>
+        <option value ="pengganyu">彭甘雨</option>
+        <option value ="huxiejiang">胡协江</option>
+        <option value ="xieenxin">谢恩信</option>
+        <option value ="yanzhengkai">闫振凯</option>
+        <option value ="songyunyuan">宋旭源</option>
+        <option value ="weixiang">魏翔</option>
+        <option value ="xiewenhe">谢文和</option>
+    </select>
+    &nbsp;用例设计者:<select name="test_design" style="width:245px;">
+        <option value ="caijiaoxing">蔡姣行</option>
+        <option value ="chengshanshan">陈珊珊</option>
+        <option value ="xiemengjia">聂梦佳</option>
+        <option value ="dengqian">邓倩</option>
+        <option value ="zhangqingyue">张静悦</option>
+    </select>
+    &nbsp;&nbsp;测试执行者:<select name="test_operator" style="width:245px;">
+        <option value ="caijiaoxing">蔡姣行</option>
+        <option value ="chengshanshan">陈珊珊</option>
+        <option value ="xiemengjia">聂梦佳</option>
+        <option value ="dengqian">邓倩</option>
+        <option value ="zhangqingyue">张静悦</option>
+    </select><br>
+    &nbsp;&nbsp;&nbsp;测试日期:<input type="text" value='' name="test_date" placeholder='' size="40" />
+    &nbsp;&nbsp;&nbsp;测试结果:<select name="test_result" style="width:245px;">
+        <option value ="untest">未测试</option>
+        <option value ="pass">PASS</option>
+        <option value ="fail">FAIL</option>
+        <option value ="un_merge">未合入</option>
+        <option value ="deprecated">废弃</option>
+    </select>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;备注:<input type="text" value='' name="remark" placeholder='' size="40" />
+    <input type="submit" value="新增">
+</form> 
+{% endblock %}
+
+{% block tableContent %}
+    {# {% if module == "new_requirement" %} #}
+    <form method="post" action ="/{{ project }}/case/split/">{% csrf_token %}
+        <input type="submit" name="split" value="归类"/>
+    </form>
+    &nbsp;&nbsp;
+    <form enctype="multipart/form-data" method="post" action ="/{{ project }}/case/import/">{% csrf_token %}
+        <input type="file" name="action" value="upload"/><br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        <input type="submit" name="sync" value="Excel上传"/>
+    </form>
+    <br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+    <form enctype="multipart/form-data" method="post" action ="/{{ project }}/case/xmindimport/">{% csrf_token %}
+        <input type="file" name="action" value="upload"/><br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        <input type="submit" name="sync" value="XMind上传"/>
+    </form>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+    <a href="/{{ project }}/case/download/">下载模板</a>
+    &nbsp;
+    <a href="/{{ project }}/case/export/">导出用例</a>
+    {% if messages %}
+        <script>
+            {% for msg in messages %}
+                alert('{{ msg.message }}');
+            {% endfor %}
+        </script>
+    {% endif %}
+    {#  {% endif %} #}
+
+    <table border="1" cellspacing="1" cellpadding="0">
+    <tr>
+        <th>操作</th>
+        <th>用例编号</th>
+        <th>用例名称</th>
+        <th>测试类型</th>
+        <th>优先级</th>
+        <th>预置条件</th>
+        <th>测试范围</th>
+        <th>测试步骤</th>
+        <th>预期结果</th>
+        <th>自动化</th>
+        <th>关联API</th>
+        <th>功能开发者</th>
+        <th>用例设计者</th>
+        <th>测试执行者</th>
+        <th>测试日期</th>
+        <th>测试结果</th>
+        <th>备注</th>
+    </tr>
+    {% for info in transList %}
+    <tr>
+        <td align="center">
+            <form method="post" action ="/{{ project }}/case/{{ module }}/test/">{% csrf_token %}
+                <input type="submit" name={{ info.case_number }} value="测试"/>
+            </form> 
+            <form method="post" action ="/{{ project }}/testcase/{{ module }}/delete/">{% csrf_token %}
+                <input type="submit" name={{ info.case_number }} value="删除"/>
+            </form> 
+            <form method="post" action ="/{{ project }}/testcase/{{ module }}/put/">{% csrf_token %}
+                <input type="submit" name={{ info.case_number }} value="修改"/>
+                <td><textarea name="case_number" cols="30" rows="4" style="font-size: large;"> {{ info.case_number }}</textarea></td>
+                <td><textarea name="case_name" cols="30" rows="4" style="font-size: large;"> {{ info.case_name }}</textarea></td>
+                <td><textarea name="case_type" cols="30" rows="4" style="font-size: large;"> {{ info.case_type }}</textarea></td>
+                <td><textarea name="priority" cols="30" rows="4" style="font-size: large;"> {{ info.priority }}</textarea></td>
+                <td><textarea name="pre_condition" cols="30" rows="4" style="font-size: large;"> {{ info.pre_condition }}</textarea></td>
+                <td><textarea name="test_range" cols="30" rows="4" style="font-size: large;"> {{ info.test_range }}</textarea></td>
+                <td><textarea name="test_steps" cols="30" rows="4" style="font-size: large;"> {{ info.test_steps }}</textarea></td>
+                <td><textarea name="expect_result" cols="30" rows="4" style="font-size: large;"> {{ info.expect_result }}</textarea></td>
+                <td><textarea name="auto" cols="30" rows="4" style="font-size: large;"> {{ info.auto }}</textarea></td>
+                <td><textarea name="api_related" cols="30" rows="4" style="font-size: large;"> {{ info.case_id }}</textarea></td>
+                <td><textarea name="fun_developer" cols="30" rows="4" style="font-size: large;"> {{ info.fun_developer }}</textarea></td>
+                <td><textarea name="case_designer" cols="30" rows="4" style="font-size: large;"> {{ info.case_designer }}</textarea></td>
+                <td><textarea name="case_executor" cols="30" rows="4" style="font-size: large;"> {{ info.case_executor }}</textarea></td>
+                <td><textarea name="test_time" cols="30" rows="4" style="font-size: large;"> {{ info.test_time }}</textarea></td>
+                <td><textarea name="test_result" cols="30" rows="4" style="font-size: large;"> {{ info.test_result }}</textarea></td>
+                <td><textarea name="remark" cols="30" rows="4" style="font-size: large;"> {{ info.remark }}</textarea></td>
+            </form> 
+        </td>
+    </tr>
+    {% endfor %}
+    </table>
+{% endblock %} 

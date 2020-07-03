@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+
+{% block title %} 
+   {{ project }} Env Vars Info 
+{% endblock %}
+
+{% block editContent %}
+        <form method="post" action ="/{{ project }}/api/comVar/"> {% csrf_token %}
+          name:<textarea name="name" placeholder='parameter name' cols="38" rows="4"></textarea>
+          value:<textarea name="value" placeholder='["value1", "value2", ……] / {"name": "value"}' cols="38" rows="4"></textarea>
+            <input type="submit" value="新增">
+        </form>
+{% endblock %}
+
+{% block tableContent %}
+    <table border="1" cellspacing="1" cellpadding="0">
+    <tr>
+        <th colspan=2>operate</th>
+        <th>name</th>
+        <th>value</th>
+    </tr>
+    {% for env in transList %}
+    <tr>
+        <td>
+            <form method="post" action ="/{{ project }}/api/comVar/remove"> {% csrf_token %}
+                <input type="submit" name={{ env.name }} value="删除"/>
+            </form>
+        </td>
+         <form method="post" action ="/{{ project }}/api/comVar/"> {% csrf_token %}
+            <td><input type="submit" name="modify" value="修改"/></td>
+            <td align="center"><input type="text" name="name" value="{{ env.name }}" size="50"></td>
+            <td align="center"><input type="text" name="value" value="{{ env.value }}" size="240"></td>
+        </form>
+    </tr>
+    {% endfor %}
+    </table>
+    <p>公用变量使用说明：</p>
+    <textarea rows="12" cols="150" readonly="readonly" disabled="disabled">
+    1. 程序中自带的变量：
+       (1) uniVar: 需要唯一的变量，例如：名称，序列号
+       (2) noChkVar: GET方法请求后，某些字段不需要检索，例如:数据库递增的id号
+    2. 自定义变量支持多种形式：
+      （1）name = "string"
+       (2) name = ["string1", "string2", ……] 不要定义太多值，组装数据做全排列，赋值太多，请求数据会呈指数增长
+       (3) /path = {"name":["string1", "string2", ……]}  同一变量定义多种形式，该方式优先
+       (4) 可以由其他API可以动态获取到的值，请使用依赖关系，详情使用见"用例详情"页面
+    3. 程序自由填充变量：
+       (1）定义为string类型的变量，会自动遍历 ["", " "] 两个变量
+       (2) 定义为integer类型的变量，会自动遍历 [-1, 65536] 两个变量
+       (3) 定义为array类型的变量，会自动遍历[[], {}, ''] 三个变量
+    </textarea>
+{% endblock %}

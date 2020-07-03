@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>AutoTest</title>
+</head>
+
+<body>
+    <h3>Test Host Info</h3>
+    <div id="content" style="">
+    <div>
+        <form method="post" action ="/host/"> {% csrf_token %}
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;PROJECT:<input type="text" width=20 value='' name="project_id" placeholder='SRV/BOOT/DAVINCI' size="40" required="required"/><br>
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;IP:&nbsp;<input type="text" value='' name="ip" placeholder='x.x.x.x' size="40" /><br>
+            &nbsp;&nbsp;&nbsp;PROTOCOL:
+            <select name="protocol" style="width:245px;">
+                <option value ="http">http</option>
+                <option value ="https">https</option>
+            </select><br>
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AUTH:
+            <select name="auth" style="width:245px;">
+                <option value ="yes">yes</option>
+                <option value ="no">no</option>
+            </select><br>
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;PREPATH:&nbsp;<input type="text" value='' name="prepath" placeholder='' size="40" /><br>
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;DBCONFIG:&nbsp;<input type="text" value='' name="dbconfig" placeholder='' size="40" /><br>
+            &nbsp;&nbsp;&nbsp;THREADING:
+            <select name="threading" style="width:245px;">
+                <option value ="False">False</option>
+                <option value ="True">True</option>
+            </select><br>
+            &nbsp;&nbsp;&nbsp;USERMODE:
+            <select name="usermode" style="width:245px;">
+                <option value ="uam">uam</option>
+                <option value ="native">native</option>
+                <option value ="uc">uc</option>
+            </select><br>
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;DEBUG:
+            <select name="debug" style="width:245px;">
+                <option value ="True">True</option>
+                <option value ="False">False</option>
+            </select><br>
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;TOKEN:&nbsp;<input type="text" value='' name="token" placeholder='' size="40" /><br>
+            <input type="submit" value="新增">
+        </form>
+        {% if messages %}
+        <script>
+            {% for msg in messages %}
+                alert('{{ msg.message }}');
+            {% endfor %}
+        </script>
+        {% endif %}
+    </div>
+    </div>
+    <br>
+    <table border="1" cellspacing="1" cellpadding="0">
+    <tr>
+        <th colspan=2>operate</th>
+        <th>PROJECT</th>
+        <th colspan=2>ITEM</th>
+        <th>IP</th>
+        <th>AUTH</th>
+        <th>PROTOCOL</th>
+        <th>PREPATH</th>
+        <th>DEBUG</th>
+        <th>THREADING</th>
+        <th>USERMODE</th>
+        <th>DBCONFIG</th>
+        <th>TOKEN</th>
+    </tr>
+    {% for info in transList %}
+    <tr>
+        <td>
+            <form method="post" action ="/host/remove" > {% csrf_token %}
+                <input type="submit" name={{ info.project_id }} value="删除" >
+            </form>
+        </td> 
+         <form method="post" action ="/host/"> {% csrf_token %}
+            <td><input type="submit" name="modify" value="修改"/></td>
+
+            <td align="center"><a href="{{ LINK_PATH_HEAD }}/{{ info.project_id }}/api/source">{{ info.project_id }}</a></td>
+
+            <td align="center"><a href="{{ LINK_PATH_HEAD }}/{{ info.project_id }}/api/source">&nbsp;&nbsp;apiCase&nbsp;&nbsp;</a></td>
+            <td align="center"><a href="{{ LINK_PATH_HEAD }}/{{ info.project_id }}/case/new_requirement/">&nbsp;&nbsp;testCase&nbsp;&nbsp;</a></td>
+            <td style="display:none;"><input type="text" name="project" value="{{ info.project_id }}"></td>
+            <td align="center"><input type="text" name="ip" value="{{ info.ip }}" size="12"></td>
+            <td align="center"><input type="text" name="protocol" value="{{ info.protocol }}" size="6"></td>
+            <td align="center"><input type="text" name="auth" value="{{ info.auth }}" size="6"></td>
+            <td align="center"><input type="text" name="prepath" value="{{ info.prepath }}" size="18"></td> 
+            <td align="center"><input type="text" name="debug" value="{{ info.debug }}" size="6"></td>
+            <td align="center"><input type="text" name="threading" value="{{ info.threading }}" size="6"></td>
+            <td align="center"><input type="text" name="usermode" value="{{ info.usermode }}" size="6"></td>
+            <td align="center"><input type="text" name="dbconfig" value="{{ info.dbconfig }}" size="50"></td>
+            <td align="center"><input type="text" name="token" value="{{ info.token }}" size="200"></td>
+        </form>
+        <script>
+            {% for msg in messages %}
+                alert('{{ msg.message }}');
+            {% endfor %}
+        </script>
+    </tr>
+    {% endfor %}
+    </table>
+</body>
+</html>

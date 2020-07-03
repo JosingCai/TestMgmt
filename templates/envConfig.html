@@ -1,0 +1,55 @@
+{% extends 'base.html' %}
+
+{% block title %} 
+   {{ project }} Env Config Info 
+{% endblock %}
+
+{% block editContent %}
+{% endblock %}
+
+{% block tableContent %}
+    <div id="content" style="">
+    <div>
+        <form method="post" action ="/{{ project }}/envConfig">
+            docker_user:<input type="text" width=20 value='' name="docker_user" placeholder='' size="40"/><br>
+            docker_pwd:<input type="text" value='' name="docker_pwd" placeholder='' size="40" /><br>
+            host_user:<input type="text" value='' name="host_user" placeholder='' size="40" /><br>
+            host_pwd:<input type="text" value='' name="host_pwd" placeholder='' size="40" /><br>
+            <input type="submit" value="新增">
+        </form>
+    </div>
+    </div>
+    <br>
+
+
+    <table border="1" cellspacing="1" cellpadding="0">
+    <tr>
+        <th colspan=1>
+            <form method="post" action ="/{{ project }}/envConfig/all">
+                <input type="submit" value="配置全部"/>
+            </form>
+        </th>
+        <th>item</th>
+        <th>fstab</th>
+        <th>mountpoint</th>
+        <th>dhcp</th>
+        <th>dns</th>
+        <th>result</th>
+    </tr>
+    {% for info in transList %}
+    <tr>
+        <td>
+            <form method="post" action ="/{{ project }}/envConfig/run">
+                <input type="submit" name={{ info.case_id }} value="配置"/>
+            </form>
+        </td>
+        <td>{{ info.item }}</td>
+        <td>{{ info.fstab }}</td>
+        <td>{{ info.mountpoint }}</td>
+        <td>{{ info.dhcp }}</td>
+        <td>{{ info.dns }}</td>
+        <td>{{ info.result }}</td>
+    </tr>
+    {% endfor %}
+    </table>
+{% endblock %} 

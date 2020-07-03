@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+
+{% block title %} 
+   {{ project }} Test Result 
+{% endblock %}
+
+{% block editContent %}
+{% endblock %}
+
+{% block tableContent %}
+    <table border="1" cellspacing="1" cellpadding="0">
+    <tr>
+        <th>case_id</th>
+        <th>url</th>
+        <th>body</th>
+        <th>response</th>
+        <th>testResult</th>
+        <th>respContent</th>
+        {# <th>header</th> #}
+    </tr>
+    {% for response in transList %}
+    <tr>
+        <td>{{ response.case_id }}</td>
+        <td>{{ response.url }}</td>
+        <td>{{ response.body }}</td>
+        <td>{{ response.response }}</td> 
+        <td align="center">{{ response.testResult }}</td>
+        <td>{{ response.failReason }}</td>
+        {# <td>{{ response.header }}</td> #}
+    </tr> 
+    {% endfor %}
+    </table>
+{% endblock %}

@@ -1,0 +1,72 @@
+{% extends 'base.html' %}
+
+{% block title %} 
+   Gitlab Repo Info
+{% endblock %}
+
+{% block editContent %}
+{% endblock %}
+
+{% block tableContent %}
+    <table border="1" cellspacing="1" cellpadding="0">
+    <tr>
+        <form method="post" action ="/{{ project }}/case/test_report/"> {% csrf_token %}
+            <td><input type="submit" name="create_test_report_all" value="生成测试报告"/></td>
+        </form>
+        {% if messages %}
+        <script>
+            {% for msg in messages %}
+                alert('{{ msg.message }}');
+            {% endfor %}
+        </script>
+        {% endif %}
+        {#  {% endif %} #}
+    </th>
+        <th>repo</th>
+        <th>product</th>
+        <th>milsestone</th>
+        <th>rss_token</th>
+        <th>remark</th>
+    </tr>
+    <tr>    
+        <form method="post" action ="/{{ project }}/case/export/"> {% csrf_token %}
+            <input type="submit" name="test_report" value="生成全部子版本测试报告"/>
+            <input type="hidden" name="milestone" value="all_version" size="20">
+        </form> 
+    </tr>
+    <br>
+    {% for info in transList %}
+    <tr>
+        <form method="post" action ="/{{ project }}/case/test_plan/"> {% csrf_token %}
+            <input type="submit" name="test_plan" value="生成{{ info.milestone }}测试计划表"/>
+            <input type="hidden" name="milestone" value="{{ info.milestone }}" size="20">
+        </form>
+    </tr>
+    <tr>    
+        <form method="post" action ="/{{ project }}/case/export/"> {% csrf_token %}
+            <input type="submit" name="test_report" value="生成{{ info.milestone }}测试报告"/>
+            <input type="hidden" name="milestone" value="{{ info.milestone }}" size="20">
+        </form> 
+    </tr>
+    <br>
+    
+    <tr>
+        <form method="post" action ="/{{ project }}/case/repo_issue/"> {% csrf_token %}
+            <td><input type="submit" name="create_test_report" value="同步Issue列表"/></td>
+            <td align="center"><input type="text" name="repo" value="{{ info.repo }}" size="50"></td>
+            <td align="center"><input type="text" name="product_id" value="{{ info.product_id }}" size="50"></td>
+            <td align="center"><input type="text" name="milestone" value="{{ info.milestone }}" size="50"></td>
+            <td align="center"><input type="text" name="rss_token" value="{{ info.rss_token }}" size="50"></td>
+            <td align="center"><input type="text" name="remark" value="{{ info.remark }}" size="50"></td>
+        </form>
+        {% if messages %}
+        <script>
+            {% for msg in messages %}
+                alert('{{ msg.message }}');
+            {% endfor %}
+        </script>
+        {% endif %}
+    </tr>
+    {% endfor %}
+    </table>
+{% endblock %}

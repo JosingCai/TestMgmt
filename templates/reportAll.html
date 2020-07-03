@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+
+{% block title %} 
+   {{ project }} Report Info 
+{% endblock %}
+
+{% block editContent %}
+        
+{% endblock %}
+
+{% block tableContent %}
+    <table border="1" cellspacing="1" cellpadding="0">
+    <tr>
+        <th>operator</th>
+        <th>cn_name</th>
+        <th>en_name</th>
+    </tr>
+    {% for info in transList %}
+    <tr>
+        <td>
+          <form method="GET" action ="/api/report/detail" >
+            <input type="submit" name={{ info.en_name }} value="详情" >
+            <input type="hidden" name="cn_name" value={{ info.cn_name }}></input>
+            <input type="hidden" name="en_name" value={{ info.en_name }}></input>
+          </form>
+        </td>
+       <td align="center">{{ info.cn_name }}</td>
+       <td align="center">{{ info.en_name }}</td>
+    </tr>
+    {% endfor %}
+    </table>
+{% endblock %} 

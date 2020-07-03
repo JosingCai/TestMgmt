@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+
+{% block title %} 
+   {{ project }} Report Info 
+{% endblock %}
+
+{% block editContent %}
+        
+{% endblock %}
+
+{% block tableContent %}
+    <table border="1" cellspacing="1" cellpadding="0">
+    <tr>
+        <th>milsestone</th>
+        <th>issue_id</th>
+        <th>issue_type</th>
+        <th>name</th>
+        <th>author</th>
+        <th>assignees</th>
+        <th>test</th>
+        <th>updated</th>
+        <th>result</th>
+        <th>reopen</th>
+        <th>tag</th>
+        <th>remark</th>
+    </tr>
+    {% for info in transList %}
+      <td align="center">{{ info.milestone }}</td>
+      <td >{{ info.issue_id }}</td>
+      <td align="center">{{ info.issue_type }}</td>
+      <td >{{ info.name }}</td>
+      <td align="center">{{ info.author }}</td>
+      <td >{{ info.assignees }}</td>
+      <td align="center">{{ info.test }}</td>
+      <td align="center">{{ info.updated }}</td>
+      <td align="center">{{ info.result }}</td>
+      <td align="center">{{ info.reopen }}</td>
+      <td >{{ info.tag }}</td>
+      <td >{{ info.remark }}</td>
+    </tr>
+    {% endfor %}
+    </table>
+{% endblock %} 
