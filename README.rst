@@ -27,3 +27,5 @@ Quick start
    to create a TestMgmt (you'll need the Admin app enabled).
 
 5. Visit http://127.0.0.1:8000/TestMgmt/ to participate in the poll.
+
+6. If you have no auth to login, please create it
