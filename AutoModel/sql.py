@@ -3,12 +3,12 @@
 
 from local.function.comModVar import *
 
-path_head = "http://10.0.3.8"
+path_head = "http://10.0.x.x"
 
 path_source = "/Users/josing/Yunji/Code/cloudboot/src/idcos.com/cloudboot/server/cloudbootserver"
 path_sql_inject = "/Users/josing/Yunji/CodeDevel/Python/sqlmap-dev"
 DEBUG = True
-cookie = "user-authentication=MTU2ODYyNjgwMHxEdi1CQkFFQ180SUFBUkFCRUFBQV84N19nZ0FGQm5OMGNtbHVad3dHQUFST1lXMWxCbk4wY21sdVp3d1JBQV9vdG9YbnVxZm5ycUhua0libGtaZ0djM1J5YVc1bkRBWUFCRkp2YkdVR2MzUnlhVzVuREE4QURVRmtiV2x1YVhOMGNtRjBiM0lHYzNSeWFXNW5EQTBBQzBGalkyVnpjMVJ2YTJWdUJuTjBjbWx1Wnd3aUFDQTJPRGMyUWpoR1JqSkZRemhDTlRBd09VSkdOakkwT1RBeVFrTkJPREUxTVFaemRISnBibWNNQkFBQ1NVUUVkV2x1ZEFZQ0FBRUdjM1J5YVc1bkRBb0FDRlZ6WlhKdVlXMWxCbk4wY21sdVp3d0hBQVZoWkcxcGJnPT18wYzRf38L4RYPSJobIHLlb9NWECLk-6Pw7O2x3nFuViw="
+cookie = "xxxx"
 
 def logRecord(string, Type=0):
         info = {0: "Info", 1: "Error"}
@@ -38,7 +38,7 @@ def get_api():
 
 def sql_inject_scan(*apis):
     define_dict = {"sn": "3Q28132", "ext": "no", "task_item_id": "n"}
-    define_data = {"company": "dell","UserID":0, "Status":"success", "Sn":"2102310LXP10E3101791", "Username":"admin","Password":"zaq1@WSX", "userid": 2,"Network":"192.168.1.1/24","Netmask":"255.255.255.0","Gateway":"192.168.1.1", "category": "black"}
+    define_data = {"company": "dell","UserID":0, "Status":"success", "Sn":"2102310LXP10E3101791", "Username":"admin","Password":"pwd", "userid": 2,"Network":"192.168.1.1/24","Netmask":"255.255.255.0","Gateway":"192.168.1.1", "category": "black"}
     for api in apis:
         if "{sn}" in api["path"]:
             api["path"] = api["path"].replace("{sn}", define_dict["sn"])

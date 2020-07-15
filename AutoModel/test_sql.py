@@ -5,7 +5,7 @@
 # Usage: 
 #     
 # Author: JosingCai
-# Email: caijiaoxing@idcos.com
+# Email: 723266219@qq.com
 # CreateDate: 2019/06/12
 # Update: 
 
@@ -16,8 +16,7 @@ import string
 class Database(object):
 	"""docstring for Database"""
 	def __init__(self):
-		#self.db = pymysql.connect(host="10.0.9.33",user="admin",passwd="Yunjikeji#123",db="cloudboot", port=3306,charset = 'utf8')
-		self.db = pymysql.connect(host="10.0.3.8",user="root",passwd="Yunjikeji#123",db="cloudboot284_gfsc", port=3306,charset = 'utf8')
+		self.db = pymysql.connect(host="x.x.x.x",user="user",passwd="pwd",db="dbname", port=3306,charset = 'utf8')
 		self.cursor = self.db.cursor()
 
 	def get_tables(self):
