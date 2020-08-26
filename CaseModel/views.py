@@ -4,7 +4,7 @@ from django.http import HttpResponse,FileResponse
 from django.contrib import messages
 from django.conf import settings
 from rest_framework.decorators import api_view
-from CaseModel.models import ProductDir,Product_Gitlab,Issue_Info,Test_Plan_Schedule
+from CaseModel.models import ProductDir,Product_Gitlab,Issue_Info,Test_Plan_Schedule, Issue_Milestone_Count
 from CaseModel.issue import issue_start
 from CaseModel.testcase import TestCase as t_TestCase
 from CaseModel.models import TestCase as m_TestCase
@@ -57,6 +57,7 @@ def case_export(request, project):
     for item in module_list:
         modules.append(item[0])
     t_handle = t_TestCase(project,operate="export")
+    t_handle.write_sumup_info()
     for item in modules:
         ret_list = list(m_TestCase.objects.filter(module=item,project=project).values())
         if item == None:
@@ -64,10 +65,34 @@ def case_export(request, project):
         t_handle.write_sheet_info(item, *ret_list)
     if request.method == "POST":
         body = dict(request.POST)
-        issue_list = list(Issue_Info.objects.filter(milestone=body['milestone'][0],project=project).values())
-        t_handle.write_issue_info("issue汇总", *issue_list)    
-        testplan_list = list(Test_Plan_Schedule.objects.filter(milestone=body['milestone'][0],project=project).values())
-        t_handle.write_testplan_info("测试计划时间表", *testplan_list)
+        if body['milestone'][0] == "all_product":
+            repo_list = Product_Gitlab.objects.filter(project_id=project).values()
+            for repo in repo_list:
+                sheet_name = repo['product_id'].split("/")[-1]
+                if repo["milestone"] == "all":
+                    issue_list = list(Issue_Info.objects.filter(product=repo['product_id'],project=project).values())
+                else:
+                    issue_list = list(Issue_Info.objects.filter(product=repo['product_id'],milestone=repo["milestone"],project=project).values())
+
+                if len(issue_list) > 0:
+                    t_handle.write_issue_info("%s-issue-汇总" %sheet_name, *issue_list)
+            
+            testplan_list = list(Test_Plan_Schedule.objects.filter(milestone=body['milestone'][0],project=project).values())
+            if len(testplan_list) > 0:
+                t_handle.write_testplan_info("%s-测试计划表" %sheet_name, *testplan_list)
+        else:
+            sheet_name = body['product_id'][0].replace("/", "-")
+            if body['milestone'][0] == "all":
+                issue_list = list(Issue_Info.objects.filter(product=body['product_id'][0],project=project).values())
+            else:
+                issue_list = list(Issue_Info.objects.filter(product=body['product_id'][0],milestone=body['milestone'][0],project=project).values())
+                # issue_count = list(Issue_Milestone_Count.objects.filter(product=body['product_id'][0],milestone=body['milestone'][0],project=project).values())
+            if len(issue_list) > 0:
+                t_handle.write_issue_info("%s-issue-汇总" %sheet_name, *issue_list)
+            
+            testplan_list = list(Test_Plan_Schedule.objects.filter(milestone=body['milestone'][0],project=project).values())
+            if len(testplan_list) > 0:
+                t_handle.write_testplan_info("%s-测试计划表" %sheet_name, *testplan_list)
 
     ret_file_name = t_handle.get_file_name()
     file = open(ret_file_name, 'rb')
@@ -100,9 +125,7 @@ def case_import(request, project):
 
         t_handle = t_TestCase(project=project, file_name=file_path)
         case_list = t_handle.read_all()
-        # print("case_list: ",case_list)
         for info in case_list:
-            # print("info: ",info)
             ret_old = list(m_TestCase.objects.filter(case_number=info['case_number']).values())
             if len(ret_old) > 0:
                 obj = m_TestCase.objects.filter(case_number=info['case_number']).update(case_name=info['case_name'],case_type=info['case_type'],priority=info['priority'],pre_condition=info['pre_condition'],test_range=info['test_range'],test_steps=info['test_steps'],expect_result=info['expect_result'],auto=info['auto'],case_id=info['api_related'], fun_developer=info['fun_developer'], case_designer=info['case_designer'],case_executor=info['case_executor'],test_time=info['test_time'], test_result=info['test_result'],project_id=info['project'],module=info['module']['name'],remark=info['remark'])
@@ -131,9 +154,7 @@ def case_xmindimport(request, project):
 
         t_handle = t_TestCase(project=project, file_name=file_path)
         case_list = t_handle.read_all()
-        # print("case_list: ",case_list)
         for info in case_list:
-            # print("info: ",info)
             ret_old = list(m_TestCase.objects.filter(case_number=info['case_number']).values())
             if len(ret_old) > 0:
                 obj = m_TestCase.objects.filter(case_number=info['case_number']).update(case_name=info['case_name'],case_type=info['case_type'],priority=info['priority'],pre_condition=info['pre_condition'],test_range=info['test_range'],test_steps=info['test_steps'],expect_result=info['expect_result'],auto=info['auto'],case_id=info['api_related'], fun_developer=info['fun_developer'], case_designer=info['case_designer'],case_executor=info['case_executor'],test_time=info['test_time'], test_result=info['test_result'],project_id=info['project'],module=info['module']['name'],remark=info['remark'])
@@ -184,6 +205,7 @@ def gitlab_repo(request, project):
 
 @api_view(["GET",'POST'])
 def issue_sync(request, project):
+    ret_list = Issue_Info.objects.filter(project_id=project, ).values()
     if request.method == "POST":
         body = dict(request.POST)
         repo = request.POST.get('repo')
@@ -191,7 +213,10 @@ def issue_sync(request, project):
         rss_token = request.POST.get('rss_token')
         milestone = request.POST.get('milestone')
         issue_start(project, repo, product, rss_token, milestone)
-    ret_list = Issue_Info.objects.filter(project_id=project).values()
+        if milestone == "all":
+            ret_list = Issue_Info.objects.filter(project_id=project, product=product).values()
+        else:
+            ret_list = Issue_Info.objects.filter(project_id=project, product=product, milestone=milestone).values()
     return render(request, "issue_list.html", {"transList": ret_list, "project":project})
 
 @api_view(['POST'])

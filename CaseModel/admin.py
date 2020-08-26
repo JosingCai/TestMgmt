@@ -19,8 +19,6 @@ class TestCase_List(admin.ModelAdmin):
     list_display_links = ['case_number','test_steps', 'expect_result']
 
     def patch_init(self, reqquest, queryset):
-        print("queryset", queryset)
-        print("reqques", reqques)
         queryset.update(priority="Level5", test_result="FAIL")
 
     patch_init.short_description = '修改所选'

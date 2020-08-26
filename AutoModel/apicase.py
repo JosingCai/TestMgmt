@@ -4,11 +4,13 @@ import random
 import uuid
 import requests
 import os
+from pandas.tseries.offsets import Day
 from AutoModel.models import Host, Dependency, Result, Source, TestDetail, ComVar,TestReport
 from itertools import product
 from AutoModel.common import MyThread
+import logging
+logger = logging.getLogger(__name__) 
 
-DEBUG = False
 today = datetime.datetime.now().strftime('%Y-%m-%d')
 curPath = os.getcwd()
 LogPath = "log"
@@ -17,9 +19,8 @@ class RawAPI(object):
     """docstring for RawAPI"""
     def __init__(self,  module, apiString):
         self.apiDict = {}
-        #print("apiString: ", apiString.replace("\"", "'"))
-        #apiList = apiString.replace("\"", "'").split("|")
         apiList = apiString.split("|")
+        logger.info("apiString: %s" %apiString)
         try:
             self.apiDict["APIFunction"] = apiList[0]
             self.apiDict["http_method"] = apiList[2]
@@ -33,7 +34,6 @@ class RawAPI(object):
             else:
                 self.apiDict["queryParameter"] = apiList[6]
             if len(apiList[7]) != 0:
-                print(apiList[7])
                 self.apiDict["body"] = eval(apiList[7])
             else:
                 self.apiDict["body"] = apiList[7]
@@ -42,25 +42,20 @@ class RawAPI(object):
             else:
                 self.apiDict["response"] = apiList[8]
         except Exception as e:
-            print("exception: ", e)
-            print("apiString: ", apiString)
-            print("apiList: ", apiList)
+            logger.warning("exception: %s" %e)
+            logger.info("apiList: %s" %apiList)
         self.apiDict["section"] = "%s_%s"%(self.apiDict["http_method"], self.apiDict["path"])
         host_ret = list(Host.objects.filter(project_id=module).values())
         self.hostDict = host_ret[0]
-        DEBUG = self.hostDict["debug"]
-        #print("host_info: ", self.hostDict)
         headers = {"Accept": "application/json"}
-        if self.hostDict["debug"] == "yes":
-            DEBUG = True
-        else:
-            DEBUG = False
         if ("auth" in self.hostDict) and (self.hostDict["auth"].lower() == "yes"):
             if "BOOT" in module:
                 headers["Authorization"] = self.hostDict["token"]
             else:
                 headers["access-token"] = self.hostDict["token"]
         self.hostDict["headers"] = headers
+        logger.debug("apiDict: %s" %self.apiDict)
+        logger.debug("hostDict: %s" %self.hostDict)
 
 class API(RawAPI):
     """docstring for API"""
@@ -71,6 +66,7 @@ class API(RawAPI):
         self.logFile = "%s-API-%s.log"%(self.module, today)
         case_ret = list(Dependency.objects.filter(case_id=self.apiDict["section"]).values())
         self.case_info = case_ret[0]
+        logger.debug("case_info: %s" %self.case_info)
         beforeCase = self.case_info["beforeCase"]
         afterCase = self.case_info["afterCase"]
         runNum = self.case_info["runNum"]
@@ -81,27 +77,24 @@ class API(RawAPI):
         self.chkIDs = []
         if afterCase:
             self.chkIDs = eval(afterCase)
-        self.runNum = 1
         if runNum:
             self.runNum = runNum
+        else:
+            self.runNum = 1
+
         self.param_def = []
         if param_def:
             self.param_def = eval(param_def)
     
     def expectAPI(self):
         if self.runNum == 0:
-            if DEBUG:
-                print("%s has 0 runNum test ..."%self.apiDict["section"])
+            logger.warning("%s has 0 runNum test ..."%self.apiDict["section"])
             response = {"status": "untested", "message": "未测试"}
             url = self.getRawUrl()
             data = ""
             self.saveTestReport(url, data, response)
             return True, "%s has 0 runNum test ..."%self.apiDict["section"]
         return False, "Common Test"
-
-    def hadRun(self):
-        if self.sf.hasSection(self.apiDict["section"]):
-            return True, "%s had already Test ... "%self.apiDict["section"]
 
     def getRawUrl(self):
         if len(self.hostDict["prepath"]) != 0:
@@ -116,26 +109,24 @@ class API(RawAPI):
         if self.depIDs and len(self.depIDs) > 0:
             for depID in self.depIDs:
                out_ret = list(Result.objects.filter(case_id=depID, project=self.module).values())
-               outVars = out_ret[0]
-               if DEBUG:
-                   print("befOutVars: ", outVars)
-               if outVars and len(outVars) != 0:
-                   print("befOutVars: ", outVars)
-                   depOutVars.update(eval(outVars['outVars']))
+               if out_ret:
+                   outVars = out_ret[0]
+                   logger.debug("befOutVars: %s" %outVars)
+                   if outVars and (len(outVars) != 0) and len(outVars['outVars'])>0:
+                       depOutVars.update(eval(outVars['outVars']))
         all_param_def = []
         if self.depIDs and len(self.depIDs) > 0:
             all_param_def = all_param_def + self.param_def + [self.apiDict['section']]
         else:
             all_param_def.append(self.apiDict['section'])
         for item in all_param_def:
-            print(self.module)
-            # print("item: ", item)
             item_ret = list(ComVar.objects.filter(name=item, project_id=self.module).values())
-            # print("item_ret: ", item_ret)
-            if item_ret and len(item_ret) > 0:
+            if item_ret and len(item_ret[0]['value']) > 0:
                 ret = item_ret[0]
-                depOutVars.update(eval(ret['value']))
-        print("depOutVars: ", depOutVars)
+                if isinstance(item_ret[0]['value'], dict):
+                    depOutVars.update(eval(ret['value']))
+                elif isinstance(item_ret[0]['value'], list):
+                    depOutVars[ret['name']] = eval(ret['value'])
         return depOutVars
 
     def getRandomStr(self, randomlength=16):
@@ -187,13 +178,16 @@ class API(RawAPI):
             pamras.append("body")
         ramStr12 = self.getRandomStr(12)
         ramStr8 = self.getRandomStr(8)
+        ramStr255 = self.getRandomStr(255)
         int_10 = random.randint(0,9)
-        curTime=datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        curTime = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        before7day = (datetime.datetime.now() - 7*Day()).strftime('%Y-%m-%d %H:%M:%S')
         uuid_str = uuid.uuid1()
         defDict = {"description": "自动化-描述-%s"%self.apiDict["APIFunction"], "pid": 0, "tenantId": "default", \
         "remark": "自动化-备注-%s"%self.apiDict["APIFunction"], "name": "自动化-名称-%s"%ramStr8, \
         "number": "auto%s"%ramStr8, "date": curTime, "acquire_time": curTime, \
-        "started_at": curTime, "onshelve_at": curTime, "fixed_asset_number": ramStr12, "sn": ramStr12, "uuid": uuid_str}
+        "started_at": curTime, "onshelve_at": curTime, "fixed_asset_number": ramStr12, "sn": ramStr12, "uuid": uuid_str, \
+        "cost_end": curTime, "cost_start": before7day}
         for pamra_type in pamras:
             key_list = self.apiDict[pamra_type].keys()
             for Key in key_list:
@@ -216,34 +210,18 @@ class API(RawAPI):
                 elif self.hostDict["testmode"] == "regression":
                     pass
                 elif self.hostDict["testmode"] == "normal":
-                    # if (Key not in depOutVars) and (Key not in defDict):
-                    #     String = "Not Define Var: %s"%(Key)
-                    #     if DEBUG:
-                    #         print(String)
-                    #     return False, String
                     if self.apiDict[pamra_type][Key] == "string":
                         if Key not in depOutVars:
                             if keyVar and (not isinstance(keyVar['value'], dict)):
-                                depOutVars[Key] = keyVar
+                                depOutVars[Key] = eval(keyVar['value'])
                             else:
                                 depOutVars[Key] = ramStr12
-                        # if (Key in depOutVars) and (not isinstance(depOutVars[Key], dict)):
-                        #     depOutVars[Key] = depOutVars[Key]
-                        # elif keyVar and (not isinstance(keyVar['value'], dict)):
-                        #     depOutVars[Key] = keyVar
-                        # else:
-                        #     depOutVars[Key] = ramStr12
                     elif self.apiDict[pamra_type][Key] == "integer":
                         if Key not in depOutVars:
                             if keyVar and (not isinstance(keyVar['value'], dict)):
                                 depOutVars[Key] = keyVar
                             else:
                                 depOutVars[Key] = int_10
-                        #     depOutVars[Key] = depOutVars[Key]
-                        # elif keyVar:
-                        #     depOutVars[Key] = eval(keyVar['value'])
-                        # else:
-                        #     depOutVars[Key] = int_10
                 elif self.hostDict["testmode"] == "all":
                     if self.apiDict[pamra_type][Key] == "string":
                         if (Key in depOutVars) and (not isinstance(depOutVars[Key], dict)):
@@ -259,12 +237,12 @@ class API(RawAPI):
                             depOutVars[Key] = [-1, 65536] + eval(keyVar['value'])
                         else:
                             depOutVars[Key] = [-1, 65536] + int_10
+        logger.debug("depOutVars: %s" %depOutVars)
         return True, depOutVars
 
     def getUrlPath(self, url, **depOutVars):
         urlList = []
         status, depOutVars = self.prameter_format(**depOutVars)
-        print("getUrlPath DepVars: ", depOutVars)
         if not status:
             return False, depOutVars
         key_all = self.apiDict['pathVariable']
@@ -281,7 +259,7 @@ class API(RawAPI):
                     URL = url.replace("{%s}"%Key, str(depOutVars[Key]))
                     urlList.append(URL)
 
-        print("urlList: ", urlList)
+        logger.debug("urlList: %s" %urlList)
         return True, urlList
 
     def getQueryStr(self, dep_mode="no", **depOutVars):
@@ -310,14 +288,12 @@ class API(RawAPI):
                     queryString = Key + "=" + str(depOutVars[Key])
                     queryStrList.append(queryString)
 
-            if DEBUG:
-                print("productList length: ", len(productList))
-                print("keyList length: ", len(keyList))
+            logger.debug("productList length: %d" %len(productList))
+            logger.debug("keyList length: %d" %len(keyList))
 
             if len(productList) > 6:
-                if DEBUG:
-                    print("More Value: ", productList)
-                    print("More Key : ", keyList)
+                logger.debug("More Value: %s" %productList)
+                logger.debug("More Key : %s" %keyList)
                 #productList = random.sample(productList,6)
                 productList = productList[:6]
                 keyList = keyList[:6]
@@ -334,10 +310,8 @@ class API(RawAPI):
                         else:
                             String = String + "&" + keyList[i] + "=" + str(info[i])
                 queryStrList.append(String)
-        if DEBUG:
-            print("queryStrList: ", queryStrList)
-            print("queryStrList length: ", len(queryStrList))
-        print("queryStrList: ", queryStrList)
+        logger.debug("queryStrList: %s" %queryStrList)
+        logger.debug("queryStrList length: %d" %len(queryStrList))
         return True, queryStrList
 
     def chkUniVar(self, name):
@@ -354,45 +328,40 @@ class API(RawAPI):
         status, depOutVars = self.prameter_format(**depOutVars)
         if not status:
             return False, depOutVars
-        print("self.apiDict: ", self.apiDict)
         key_all = []
-        print(len(self.apiDict["body"]))
-        print(self.apiDict["body"])
         if len(self.apiDict["body"]):
             key_all = self.apiDict["body"].keys()
-        #key_all = depOutVars.keys()
         keyList = []
         for Key in key_all:
-            if isinstance(depOutVars[Key], list):  #and len(depOutVars[Key])> 1:
+            if Key not in depOutVars:
+                return False, "No %s Var in depOutVars: %s" %(Key, depOutVars)
+            if isinstance(depOutVars[Key], list) and (self.apiDict["body"][Key] != "array"):  #and len(depOutVars[Key])> 1:
                 keyList.append(Key)
-        # print("keyList:", keyList)
         forList = []
         productList = []
         for Key in keyList:
             productList.append(depOutVars[Key])
-        # print("productList: ", productList)
         for items in product(*productList):
             forList.append(items)
-        # print("forList: ", forList)
-        # print(len(forList))
         for j in range(len(forList)):
             infoDict = {}
             if len(self.apiDict["body"]):
                 for Key in self.apiDict["body"].keys():
                     infoDict[Key] = depOutVars[Key]
+                    ret = self.chkUniVar(Key)
+                    if ret:
+                        infoDict[Key] = "auto%s"%self.getRandomStr(8)
                 for i in range(len(keyList)):
                     Key = keyList[i]
                     Value = forList[j][i]
                     infoDict[Key] = Value
                 bodyList.append(infoDict)
-        print("bodyList: ", bodyList)
+        logger.debug("bodyList: %s" %bodyList)
         return True, bodyList
 
     def assembleData(self, dep_mode="no"):
         url = self.getRawUrl()
         depOutVars = self.getDepVars()
-        # if DEBUG:
-        print("%s depOutVars: %s"%(self.apiDict["section"], depOutVars))
         status, urlList = self.getUrlPath(url, **depOutVars)
         if not status:
             return status, urlList
@@ -454,41 +423,38 @@ class API(RawAPI):
             resp = requests.put(url, headers=self.hostDict["headers"], json=data, verify=False)
         elif self.apiDict["http_method"] == "delete":
             resp = requests.delete(url, headers=self.hostDict["headers"], json=data, verify=False)
+        elif self.apiDict["http_method"] == "patch":
+            resp = requests.patch(url, headers=self.hostDict["headers"], json=data, verify=False)
+        elif self.apiDict["http_method"] == "head":
+            resp = requests.head(url)
+            logger.debug("resp.headers: %s" %resp.headers)
         curTime=datetime.datetime.now().strftime('%Y-%m-%d_%H:%M:%S')
-        logFilePath = "%s/%s/%s"%(curPath, LogPath, self.logFile)
-        # if not os.path.exists(logFilePath):
 
-        # with open("%s/%s/%s"%(curPath, LogPath, self.logFile), "a+") as f:
-        #     f.write("[ %s ]\n"%curTime)
-        #     f.write("%s: %s\n"%(self.apiDict["http_method"], url))
-        #     f.write("headers: %s\n"%(self.hostDict["headers"]))
         if data:
-            # f.write("request: %s\n"%data)
             ret_old = list(Result.objects.filter(case_id=self.apiDict["section"], project_id=self.module).values())
             if len(ret_old) > 0:
                 obj = Result.objects.filter(case_id=self.apiDict["section"],project_id=self.module).update(requestVars=data)
             else:
                 obj = Result(case_id=self.apiDict["section"],requestVars=data, project_id=self.module)
                 obj.save()
-            # f.write("response: %s"%resp.content)
         if not resp.ok:
+            logger.warning("resp.ok: %s" %resp.ok)
             try:
                 info = resp.json()
-                if DEBUG:
-                    print("response: ", info)
+                logger.debug("response: %s" %info)
                 
                 if ("message" in info) and ("status" in info):
                     response = {"status": info["status"], "message": "执行失败", "failReason": info["message"]}
                 elif ("resultMessage" in info) and ("isSuccess" in info):
                     response = {"status": info["isSuccess"], "message": "执行失败", "failReason": info["resultMessage"]}
             except Exception as e:
-                print("runMethod 1 exception: ", e)
+                logger.error("runMethod 1 exception: %s" %e)
                 response = {"status": "failure", "message": "执行失败", "failReason": resp.content}
             return False, response
         try:
             response = resp.json()
         except Exception as e:
-            print("runMethod 2 exception: ", e)
+            logger.error("runMethod 2 exception: %s" %e)
             response = {"status": "success", "message": "执行成功", "failReason": " "}
         if "status" not in response:
             if isinstance(response,list):
@@ -513,7 +479,6 @@ class API(RawAPI):
             if isinstance(response["content"], str):
                 response["content"] = str(response["content"]).replace("\n", "")
         project = Host.objects.filter(project_id=self.module)[0]
-        # print("project: ", project)
         if not response["content"]:
             response["content"] = "No Content"
         obj = TestDetail(case_id=self.apiDict["section"],APIFunction=self.apiDict["APIFunction"], url=url, body=str(data), response=response["content"], failReason=response['failReason'], testTime=TestTime,testResult=response['status'], project_id=project)
@@ -521,6 +486,7 @@ class API(RawAPI):
         return True
 
     def saveOutVar(self, response):
+        logger.debug("response: %s" %response)
         outVarsDict = {}
         ret_list = list(Dependency.objects.filter(case_id=self.apiDict["section"]).values())
         if len(ret_list) == 0:
@@ -538,7 +504,13 @@ class API(RawAPI):
                 for item in items:
                     if "*" in item:
                         subItems = item.split("*")
-                        for index in range(len(tmp[subItems[0]])):
+                        try:
+                            length = len(tmp[subItems[0]])
+                        except Exception as e:
+                            logger.error("saveOutVar %s exception: %s"%(item, e))
+                            return False, "Get Vars to Output Failed"
+
+                        for index in range(length):
                             value = tmp[subItems[0]][index][subItems[1]]
                             values.append(value)
                         tmp = values
@@ -549,7 +521,11 @@ class API(RawAPI):
                                 subValues.append(tmp[index][item])
                             tmp = subValues
                         else:
-                            tmp = tmp[item]
+                            try:
+                                tmp = tmp[item]
+                            except Exception as e:
+                                logger.error("saveOutVar %s exception: %s"%(item, e))
+                                return False, "Get Vars to Output Failed"
             else:
                 tmp = tmp[outVarItems[Key]]
             if isinstance(tmp, list):
@@ -568,7 +544,7 @@ class API(RawAPI):
                             else:
                                 items.append(item)
                         except Exception as e:
-                            print("saveOutVar exception: ", e)
+                            logger.error("saveOutVar %s exception: %s"%(item, e))
                 outVarsDict[Key] = items
             else:
                 if isinstance(tmp, int):
@@ -586,10 +562,10 @@ class API(RawAPI):
 
     def chkItem(self, reqDict, chkDict):
         nochk_ret = list(ComVar.objects.filter(name="noChkVar").values())
-        if len(uni_ret) > 0:
-            noChkVars = uni_ret[0]["value"]
-        # noChkVars = self.cf.getOption("common", "noChkVar")
-        # passList = []
+        noChkVars = {}
+        if len(nochk_ret) > 0:
+            noChkVars = nochk_ret[0]["value"]
+        passList = []
         cmpDict = {}
         chkVars = {}
         flag = "pass"
@@ -618,7 +594,7 @@ class API(RawAPI):
                             else:
                                 tmp = tmp[item]
                         except Exception as e:
-                            print("chkItem 1 exception: ", e)
+                            logger.error("chkItem 1 exception: %s" %e)
                             tmp = "Not Found Var: %s"%item
 
                 if isinstance(tmp, list):
@@ -630,7 +606,7 @@ class API(RawAPI):
                             try:
                                 items.append(item.encode("utf-8"))
                             except Exception as e:
-                                print("chkItem 2 exception: ", e)
+                                logger.error("chkItem 2 exception: %s" %e)
                                 items.append("")
                     chkVars[Key] = items
                 else:
@@ -640,13 +616,12 @@ class API(RawAPI):
                         try:
                             chkVars[Key] = tmp.encode("utf-8") 
                         except Exception as e:
-                            print("chkItem 3 exception: ", e)
+                            logger.error("chkItem 3 exception: %s" %e)
                             chkVars[Key] = tmp
             chkInfo.update(chkVars)
 
         Keys = reqDict.keys() 
-        if DEBUG:
-            print("reqDict: ", reqDict)
+        logger.debug("reqDict: %s" %reqDict)
         for Key in Keys:
             if Key not in noChkVars:
                 if Key not in chkInfo:
@@ -662,12 +637,12 @@ class API(RawAPI):
                 else:
                     passList.append(Key)
         # if DEBUG:
-        print("passList: ", passList)
+        logger.debug("passList: %s" %passList)
         return flag, cmpDict
 
     def analysisReponse(self, url, data, response):
         if not self.saveTestReport(url, data, response):
-            print("Save Test Result Failed ... ")
+            logger.error("Save Test Result Failed ... ")
         if response["status"] != "success":
             result = "FAIL"
         else:
@@ -683,6 +658,15 @@ class API(RawAPI):
         else:
             status, output = self.saveOutVar(response)
             return True, output
+
+def getSpecApi(module, method_API):
+    ret_list = list(Dependency.objects.filter(project_id=module,case_id=method_API).values())
+    if len(ret_list) > 0:
+        apiString = ret_list[0]['raw']
+    if not apiString:
+        return False, [{"case_id": method_API, "response": "Get API raw info failed, Please Check it ~ "}]
+    else:
+        return True, apiString
 
 def threadRun(handle, url, body):
     retDict = {}
@@ -702,8 +686,9 @@ def runAPI(module, apiString, number=1, mode="single", chkMode="no", dep_mode="n
     api = API(module, apiString)
     if api.runNum != 0 and api.runNum != 1:
         number = api.runNum
-
+    logger.debug("Run Mode: %s, Run Number: %d" %(mode, number))
     status, output = api.expectAPI()
+    logger.debug("status: %s,  output: %s" %(status, output))
     if status:
         retDict = {}
         retDict["case_id"] = api.apiDict["section"]
@@ -726,7 +711,7 @@ def runAPI(module, apiString, number=1, mode="single", chkMode="no", dep_mode="n
 
     if mode == "single":
         status, reqList = api.assembleData(dep_mode="yes")
-        print("reqList: ", reqList)
+        logger.debug("single reqList: %s" %reqList)
         reqList = [reqList[0]]
     elif number != 1:
         status, reqList = api.assembleData(dep_mode="yes")
@@ -735,22 +720,19 @@ def runAPI(module, apiString, number=1, mode="single", chkMode="no", dep_mode="n
             for i in range(loopNum):
                 status, tmpList = api.assembleData()
                 reqList = reqList + tmpList
-        #reqList = reqList[:number]
-        # if DEBUG:
-        # print("Init List: ", reqList[:40])
         reqList = random.sample(reqList, number)
-        # if DEBUG:
-        print("Run List: ", reqList)
         #return False, [{"case_id":api.apiDict["section"], "response": reqList}]
     else:
         status, reqList = api.assembleData()
+
     if not status:
         return False, [{"case_id":api.apiDict["section"], "response": reqList}]
     
-    # if DEBUG:
-    print("reqList: ", reqList)
+    logger.debug("reqList: %s" %reqList)
     resultList = []
+    logger.debug("AfterCase: %s, CheckMode: %s, Mode: %s" %(api.chkIDs, chkMode, mode))
     if (len(api.chkIDs) != 0 or chkMode == "no") and mode != "single":
+
         chkID = ""
         delID = ""    
 
@@ -824,6 +806,7 @@ def runAPI(module, apiString, number=1, mode="single", chkMode="no", dep_mode="n
                     return False, [delDict]
             resultList.append(retDict)
     else:
+        logger.debug("Threading Mode: %s" %api.hostDict["threading"])
         if api.hostDict["threading"] == "False":
             for info in reqList:
                 status, retDict = threadRun(api, info["url"], info["body"])
@@ -831,6 +814,7 @@ def runAPI(module, apiString, number=1, mode="single", chkMode="no", dep_mode="n
         else:
             threads = []
             length = len(reqList)
+            logger.debug("Concurrent Times: %d" %length)
             for i in range(length):
                 t = MyThread(threadRun, (api, reqList[i]["url"], reqList[i]["body"]))
                 threads.append(t)
@@ -848,10 +832,9 @@ def runTargetAPI(module, method_API, number=1, mode="loop"):
         apiString = ret_list[0]['raw']
     if not apiString:
         return False, [{"case_id": method_API, "response": "Get API raw info failed, Please Check it ~ "}]
-    status, output = runAPI(module, apiString, number, mode, chkMode="yes")
+    status, output = runAPI(module, apiString, number, mode=mode, chkMode="yes")
     if not status:
-        # if DEBUG:
-        print("run output: ", output)
+        logger.error("run output: %s" %output)
     return True, output
 
 def runAPIs(module):
@@ -859,7 +842,10 @@ def runAPIs(module):
     resultList = []
     for item in ret_list:
         case_id = item["case_id"]
-        print("case_id: ", case_id)
+        run_result = list(Result.objects.filter(case_id=case_id, project=module).values())
+        if len(run_result) > 0:
+            logger.info("Already run: %s" %case_id)
+            continue
         status, loopList = runTargetAPI(module, case_id, mode="single")
         resultList = resultList + loopList
     return resultList
@@ -891,7 +877,7 @@ class RunCase(object):
             cmd = "mv %s %s_%s.bak"%(self.tfileName, self.tfileName, curTime)
             status, output = commands.getstatusoutput(cmd)
             if status != 0:
-                print("output: ", output)
+                logger.error("output: %s" %output)
                 return "Back up %s Failed: %s"%(self.rfileName, output)
         # rf = localConfigParser(self.rfileName)
         # for item in items.keys():
@@ -974,8 +960,6 @@ class Case(object):
         return "Remove %s Config Info Success ~ "%case_id
 
     def getCaseDep(self, **info):
-        # if DEBUG:
-        # print(info)
         if len(info) != 0:
             section = list(info.keys())[0]
             ret = self.getCaseDetail(section)
@@ -1060,8 +1044,6 @@ class Case(object):
         return "Delete %s Succuss "%section
 
     def getCaseResult(self, **info):
-        # if DEBUG:
-        # print(info)
         if len(info) != 0:
             section = list(info.keys())[0]
             ret = self.getCaseDetail(section)
@@ -1081,7 +1063,7 @@ class Case(object):
         retDict = {}
         strList = strInfo.split("|")
         if len(strList) < 7:
-            print("raw: ", strInfo)
+            logger.error("raw: %s" %strInfo)
         try:
             retDict["APIFunction"] = strList[0]
             retDict["http_method"] = strList[1]
@@ -1099,9 +1081,9 @@ class Case(object):
             else:
                 retDict["Response"] = ""
         except Exception as e:
-            print("getDictResult exception: ", e)
-            print("strInfo", strInfo)
-            print("retDict", retDict)
+            logger.error("getDictResult exception: %s" %e)
+            logger.debug("strInfo: %s" %strInfo)
+            logger.debug("retDict %s" %retDict)
         retDict["case_id"] = "%s_%s"%(retDict["http_method"], retDict["path"])
         return retDict
 
@@ -1159,11 +1141,7 @@ class Case(object):
                 if rawString:
                     apiInfo = rawString.replace("\"", "").split("|")
                 else:
-                    print("section: ", section)
-                    print("rawString: ", rawString)
                     return infoList
-            # for strSource in sourceList:
-            #     apiInfo = strSource.split("|")
                 dictInfo = {}
                 section = "%s_%s"%(apiInfo[2], apiInfo[3])
                 count = 0
@@ -1174,8 +1152,6 @@ class Case(object):
                 dictInfo["APIFunction"] = apiInfo[0]
                 dictInfo["runTimes"] = self.cf.getOption(section, "runNum") 
                 for resultStr in resultList:
-                    # if DEBUG:
-                    print("result Stry: ", resultStr)
                     retDict = self.getDictResult(resultStr)
                     if section == retDict["case_id"]:
                         count = count + 1
@@ -1353,13 +1329,9 @@ class Source(object):
                 continue
             apiString = apiString.replace("\"", "")
             apiDict = {}
-            # if DEBUG:
-            #     print("apiString: ", apiString)
             if len(apiString) == 0:
                 continue
             apiList = apiString.split("|")
-            # if DEBUG:
-                # apiList
             try:
                 apiDict["APIFunction"] = apiList[0]
                 apiDict["protocol"] = apiList[1]
@@ -1385,8 +1357,7 @@ class Source(object):
                 apiDict["raw"] = apiString
                 infoList.append(apiDict)
             except Exception as e:
-                print("getSConfig exception: ", e)
-                print("apiString: ", apiString)
+                logger.error("getSConfig exception: %s" %e)
         return infoList
 
     def postSConfig(self, **info):
@@ -1432,4 +1403,4 @@ if __name__ == '__main__':
     else:
         status, output = runTargetAPI(args.module.upper(), args.targetAPI, args.number, mode="loop")
         if not status:
-            print(output)
+            logger.error(output)

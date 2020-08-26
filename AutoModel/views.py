@@ -6,6 +6,7 @@ from AutoModel.models import Host, Dependency, Result, Source, TestDetail, ComVa
 from AutoModel.swagger import AutoSource
 from AutoModel.common import raw2dict
 from AutoModel.apicase import runTargetAPI,runAPIs
+from AutoModel.report import issue_report
 from django.contrib.auth.decorators import login_required
 
 @api_view(['GET', 'POST'])
@@ -96,7 +97,13 @@ def case_run(request, project):
 @api_view(['POST'])
 def all_case_run(request, project):
     output = runAPIs(project)
-    ret_list = list(Dependency.objects.all().values())
+    ret_list = list(TestDetail.objects.all().values())
+    return render(request, "caseRun.html",{"transList": ret_list,"project": project})
+
+@api_view(['GET'])
+def report(request, project):
+    issue_report()
+    ret_list = []
     return render(request, "caseRun.html",{"transList": ret_list,"project": project})
 
 @api_view(['POST'])

@@ -226,8 +226,7 @@ def analysis(module):
     elif fileName.endswith(".json"):
         rawDict = json.loads(content)
     else:
-        print("Not Support Current %s Format File" %fileName)
-        return False
+        return False, "Not Support Current %s Format File" %fileName
     # print("rawDict: ", rawDict)
     definitions = rawDict["definitions"]
     simple_def_dict = {}
@@ -418,15 +417,17 @@ def analysis(module):
             infoDict["pathVariable"] = pathDict
             infoDict["varDesc"].update(descDict)
             infoList.append(infoDict)
-    return infoList
+    return True, infoList
 
 def json2string(project):
-    infoList = analysis(project)
+    status, infoList = analysis(project)
     all_list = []
-    if not infoList:
+    if not status:
         print("A had occured …… ")
     for info in infoList:
-        print("info: ", info)
+        if not info:
+            print("info: ", info)
+            pass
         http_method = info["http_method"]
         path = info["path"]
         APIFunction = info["APIFunction"]

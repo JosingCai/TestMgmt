@@ -13,6 +13,8 @@ import importlib,sys
 import datetime
 from xlutils.copy import copy as xl_copy
 from CaseModel.models import Issue_Tag_Count, Issue_Milestone_Count, Issue_Info
+import logging
+logger = logging.getLogger(__name__) 
 
 importlib.reload(sys)
 # Define Common Variables
@@ -28,31 +30,28 @@ DEBUG = False
 def getContent(repo, product, rss_token, milestone):
     if milestone == "all":
         url_head = "%s/%s/issues.atom?feed_token=%s&scope=all&state=" %(repo, product, rss_token)
-        pass
     else:
         url_head = "%s/%s/issues.atom?feed_token=%s&milestone_title=%s&scope=all&state=" %(repo, product, rss_token, milestone)
     all_url = url_head + "all"
     open_url = url_head + "opened"
     closed_url = url_head + "closed"
     url_dict = {"open": open_url, "all": all_url, "closed": closed_url}
-    # print("url_dict: ", url_dict)
     base_dir = "static/raw"
     for Key in url_dict.keys():
         target_dir = "static/raw/%s" %Key
         if not os.path.exists(target_dir):
             os.mkdir(target_dir)
-        # else:
-        #     os.remove(target_dir)
-        #     os.mkdir(target_dir)
+        else:
+            shutil.rmtree(target_dir)
+            os.mkdir(target_dir)
+
         for num in range(1, pageMaxNum):
             url = url_dict[Key] + "&page=%d" %num
-            if DEBUG:
-                print("url: %s" %url)
+            logger.info("url: %s" %url)
             resp = requests.get(url)
-            if DEBUG:
-                print(resp.text)
+            logger.info
             if not resp.ok:
-                print(resp.text)
+                logger.debug(resp.ok)
                 break
             if len(resp.text) < 500:
                 break
@@ -91,7 +90,6 @@ def analysisTag(tagAggregate, product):
         ID = item.getElementsByTagName('id')[0]
         ID = ID.childNodes[0].data
         ID = ID.split('/')[-1]
-        print("product: ", product)
         infoDict['id'] = "%s/%s/issues/%s"%(GITLABREPO, product, ID)
 
         author = item.getElementsByTagName('author')[0]
@@ -289,7 +287,6 @@ def write_excel_count(sheet_name, **info):
     cur_day = datetime.datetime.now().strftime('%Y%m%d')
     excel_file_name = 'issues_count_%s.xls' %cur_day
     #初始化一个excel
-    # print(sheet_name)
     if os.path.exists(excel_file_name):
         wb = xlrd.open_workbook(excel_file_name)
         excel = xl_copy(wb)
@@ -311,18 +308,11 @@ def write_excel_count(sheet_name, **info):
     # pattern.pattern = xlwt.Pattern.SOLID_PATTERN  # May be: NO_PATTERN, SOLID_PATTERN, or 0x00 through 0x12
     # pattern.pattern_fore_colour = 4  # May be: 8 through 63. 0 = Black, 1 = White, 2 = Red, 3 = Green, 4 = Blue, 5 = Yellow, 6 = Magenta, 7 = Cyan, 16 = Maroon, 17 = Dark Green, 18 = Dark Blue, 19 = Dark Yellow , almost brown), 20 = Dark Magenta, 21 = Teal, 22 = Light Gray, 23 = Dark Gray, the list goes on...
     # # sheet.col(0).width = 300 #设置某列的单元格宽度
-    # print(info)   
     p_keys = list(info.keys())
-    # print(p_keys)
-    # print(type(p_keys))
-    # print("p_keys: %s" %p_keys)
     c_keys=[]
     for p_key in p_keys:
         c_keys = c_keys + list(info[p_key].keys())
     c_keys = list(set(c_keys))
-    # c_keys = list(info[p_keys[0]].keys())
-    # print("c_keys: %s" %c_keys)
-    # print(len(c_keys))
     for p_key in p_keys:
         for c_key in c_keys:
             if not c_key in info[p_key]:
@@ -333,7 +323,6 @@ def write_excel_count(sheet_name, **info):
         sheet.write(i+1, 0, p_keys[i])
 
     for j in range(len(c_keys)):
-        #print(c_keys[j])
         sheet.write(0, j+1, c_keys[j])
 
     for i in range(len(p_keys)):
@@ -359,57 +348,52 @@ def getCount(project,product,milestone):
             infos = analysisXML(entries,product)
             infoList = infoList + infos
         sum_up_data_list = get_sum_up_data(*infoList)
-        #print(sum_up_data_list)
-        # print("sum_up_data_list[0]: ", sum_up_data_list[0])
-        # print("product: ", product)
-        # print("milestone: ", milestone)
-        # print("project: ", project)
         if milestone == "all":
             milestone_list = sum_up_data_list[0].keys()
             for milestone_sub in milestone_list:
                 ret_old = list(Issue_Milestone_Count.objects.filter(product=product,milestone=milestone_sub,project_id=project).values())
-            if state == "all":
-                if len(ret_old) > 0:
-                    obj = Issue_Milestone_Count.objects.filter(product=product,project_id=project,milestone=milestone_sub).update(all_count=sum_up_data_list[0][milestone_sub]['sum'])
-                else:
-                    obj = Issue_Milestone_Count(product=product,project_id=project,milestone=milestone_sub, all_count=sum_up_data_list[0][milestone_sub]['sum'])
-                    obj.save()
-                for item in sum_up_data_list[0][milestone_sub].keys():
-                    if item != "sum":
-                        ret_lable = list(Issue_Tag_Count.objects.filter(product=product,milestone=milestone_sub,project_id=project, tag=item).values())
-                        if len(ret_lable) > 0:
-                            obj = Issue_Tag_Count.objects.filter(product=product,project_id=project,milestone=milestone_sub,tag=item).update(all_count=sum_up_data_list[0][milestone_sub][item])
-                        else:
-                            obj = Issue_Tag_Count(product=product,project_id=project,milestone=milestone_sub, tag=item, all_count=sum_up_data_list[0][milestone_sub][item])
-                            obj.save()
-            elif state == "open":
-                if len(ret_old) > 0:
-                    obj = Issue_Milestone_Count.objects.filter(product=product,project_id=project,milestone=milestone_sub).update(open_count=sum_up_data_list[0][milestone_sub]['sum'])
-                else:
-                    obj = Issue_Milestone_Count(product=product,project_id=project,milestone=milestone_sub, open_count=sum_up_data_list[0][milestone_sub]['sum'])
-                    obj.save()
-                for item in sum_up_data_list[0][milestone_sub].keys():
-                    if item != "sum":
-                        ret_lable = list(Issue_Tag_Count.objects.filter(product=product,milestone=milestone_sub,project_id=project, tag=item).values())
-                        if len(ret_lable) > 0:
-                            obj = Issue_Tag_Count.objects.filter(product=product,project_id=project,milestone=milestone_sub,tag=item).update(open_count=sum_up_data_list[0][milestone_sub][item])
-                        else:
-                            obj = Issue_Tag_Count(product=product,project_id=project,milestone=milestone_sub, tag=item, open_count=sum_up_data_list[0][milestone_sub][item])
-                            obj.save()
-            elif state == "closed":
-                if len(ret_old) > 0:
-                    obj = Issue_Milestone_Count.objects.filter(product=product,project_id=project,milestone=milestone_sub).update(closed_count=sum_up_data_list[0][milestone_sub]['sum'])
-                else:
-                    obj = Issue_Milestone_Count(product=product,project_id=project,milestone=milestone_sub, closed_count=sum_up_data_list[0][milestone_sub]['sum'])
-                    obj.save()
-                for item in sum_up_data_list[0][milestone_sub].keys():
-                    if item != "sum":
-                        ret_lable = list(Issue_Tag_Count.objects.filter(product=product,milestone=milestone_sub,project_id=project, tag=item).values())
-                        if len(ret_lable) > 0:
-                            obj = Issue_Tag_Count.objects.filter(product=product,project_id=project,milestone=milestone_sub,tag=item).update(closed_count=sum_up_data_list[0][milestone_sub][item])
-                        else:
-                            obj = Issue_Tag_Count(product=product,project_id=project,milestone=milestone_sub, tag=item, closed_count=sum_up_data_list[0][milestone_sub][item])
-                            obj.save()
+                if state == "all":
+                    if len(ret_old) > 0:
+                        obj = Issue_Milestone_Count.objects.filter(product=product,project_id=project,milestone=milestone_sub).update(all_count=sum_up_data_list[0][milestone_sub]['sum'])
+                    else:
+                        obj = Issue_Milestone_Count(product=product,project_id=project,milestone=milestone_sub, all_count=sum_up_data_list[0][milestone_sub]['sum'])
+                        obj.save()
+                    for item in sum_up_data_list[0][milestone_sub].keys():
+                        if item != "sum":
+                            ret_lable = list(Issue_Tag_Count.objects.filter(product=product,milestone=milestone_sub,project_id=project, tag=item).values())
+                            if len(ret_lable) > 0:
+                                obj = Issue_Tag_Count.objects.filter(product=product,project_id=project,milestone=milestone_sub,tag=item).update(all_count=sum_up_data_list[0][milestone_sub][item])
+                            else:
+                                obj = Issue_Tag_Count(product=product,project_id=project,milestone=milestone_sub, tag=item, all_count=sum_up_data_list[0][milestone_sub][item])
+                                obj.save()
+                elif state == "open":
+                    if len(ret_old) > 0:
+                        obj = Issue_Milestone_Count.objects.filter(product=product,project_id=project,milestone=milestone_sub).update(open_count=sum_up_data_list[0][milestone_sub]['sum'])
+                    else:
+                        obj = Issue_Milestone_Count(product=product,project_id=project,milestone=milestone_sub, open_count=sum_up_data_list[0][milestone_sub]['sum'])
+                        obj.save()
+                    for item in sum_up_data_list[0][milestone_sub].keys():
+                        if item != "sum":
+                            ret_lable = list(Issue_Tag_Count.objects.filter(product=product,milestone=milestone_sub,project_id=project, tag=item).values())
+                            if len(ret_lable) > 0:
+                                obj = Issue_Tag_Count.objects.filter(product=product,project_id=project,milestone=milestone_sub,tag=item).update(open_count=sum_up_data_list[0][milestone_sub][item])
+                            else:
+                                obj = Issue_Tag_Count(product=product,project_id=project,milestone=milestone_sub, tag=item, open_count=sum_up_data_list[0][milestone_sub][item])
+                                obj.save()
+                elif state == "closed":
+                    if len(ret_old) > 0:
+                        obj = Issue_Milestone_Count.objects.filter(product=product,project_id=project,milestone=milestone_sub).update(closed_count=sum_up_data_list[0][milestone_sub]['sum'])
+                    else:
+                        obj = Issue_Milestone_Count(product=product,project_id=project,milestone=milestone_sub, closed_count=sum_up_data_list[0][milestone_sub]['sum'])
+                        obj.save()
+                    for item in sum_up_data_list[0][milestone_sub].keys():
+                        if item != "sum":
+                            ret_lable = list(Issue_Tag_Count.objects.filter(product=product,milestone=milestone_sub,project_id=project, tag=item).values())
+                            if len(ret_lable) > 0:
+                                obj = Issue_Tag_Count.objects.filter(product=product,project_id=project,milestone=milestone_sub,tag=item).update(closed_count=sum_up_data_list[0][milestone_sub][item])
+                            else:
+                                obj = Issue_Tag_Count(product=product,project_id=project,milestone=milestone_sub, tag=item, closed_count=sum_up_data_list[0][milestone_sub][item])
+                                obj.save()
         else:
             ret_old = list(Issue_Milestone_Count.objects.filter(product=product,milestone=milestone,project_id=project).values())
             if state == "all":
@@ -476,7 +460,7 @@ def write_excel_issue(sheet_name, *infos):
             sheet.write(i+1, j, value_list[j])
     excel.save(excel_file_name)
 
-def get_issue(project,product,milestone):
+def get_issue(project,product):
     #state_list = ["all", "open", "closed"]
     state_list = ["open", "closed"]
     for state in state_list:
@@ -493,27 +477,23 @@ def get_issue(project,product,milestone):
             entries = root.getElementsByTagName('entry')
             infos = analysisTag(entries, product)
             infoList = infoList + infos
-        print(infoList)
         milestone_dict = get_issue_data(state, *infoList)
         all_dict.update(milestone_dict)
         for ms in all_dict:
             for issue in all_dict[ms]:
-                print("1")
-                print("issue: ", issue)
-                print(project,product,milestone)
                 # write_excel_issue(key, *all_list[0][key])
-                ret_lable = list(Issue_Info.objects.filter(product=product,milestone=milestone,project_id=project, issue_id=issue["id"]).values())
+                ret_lable = list(Issue_Info.objects.filter(product=product,milestone=issue['milestone'],project_id=project, issue_id=issue["id"]).values())
                 if len(ret_lable) > 0:
-                    obj = Issue_Info.objects.filter(product=product,project_id=project,milestone=milestone,issue_id=issue["id"]).update(issue_id=issue['id'], issue_type=issue['type'],name=issue['title'], author=issue['author'],assignees=issue['assignee'],test=issue['author'], updated=issue['updated'], result=issue['result'],reopen=issue['ReOpen'],tag=issue['lables'])
+                    obj = Issue_Info.objects.filter(product=product,project_id=project,milestone=issue['milestone'],issue_id=issue["id"]).update(issue_id=issue['id'], issue_type=issue['type'],name=issue['title'], author=issue['author'],assignees=issue['assignee'],test=issue['author'], updated=issue['updated'], result=issue['result'],reopen=issue['ReOpen'],tag=issue['lables'])
                 else:
-                    obj = Issue_Info(product=product,project_id=project,milestone=milestone,issue_id=issue['id'],  issue_type=issue['type'],name=issue['title'], author=issue['author'],assignees=issue['assignee'],test=issue['author'], updated=issue['updated'], result=issue['result'],reopen=issue['ReOpen'],tag=issue['lables'])
+                    obj = Issue_Info(product=product,project_id=project,milestone=issue['milestone'],issue_id=issue['id'],  issue_type=issue['type'],name=issue['title'], author=issue['author'],assignees=issue['assignee'],test=issue['author'], updated=issue['updated'], result=issue['result'],reopen=issue['ReOpen'],tag=issue['lables'])
                     obj.save()
     return True
 
 def issue_start(project, repo, product, rss_token, milestone):
     getContent(repo, product,rss_token, milestone)
     getCount(project,product,milestone)
-    get_issue(project,product,milestone)
+    get_issue(project,product)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Auto Count GitLab Issues")

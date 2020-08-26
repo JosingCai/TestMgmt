@@ -14,6 +14,7 @@ urlpatterns = [
     url(r'case_result/', views.case_result),
     url(r'comVar/', views.com_var),
     url(r'result_detail/', views.result_detail),
+    # url(r'result_report/', views.report),
     url(r'result_report/', views.result_report),
     url(r'case_detail/', views.case_detail),
     url(r'dep_remove/', views.dep_remove),

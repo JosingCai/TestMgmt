@@ -4,9 +4,10 @@ import plotly as py
 import plotly.figure_factory as ff
 from django.conf import settings
 from CaseModel.models import Test_Plan_Schedule
+import logging
+logger = logging.getLogger(__name__) 
 
 def create_gantt(project, milestone):
-    print(project,milestone)
     test_plan = list(Test_Plan_Schedule.objects.filter(milestone=milestone,project_id=project).values())
     if len(test_plan) > 0:
         p_info_list = []
@@ -63,6 +64,5 @@ def create_gantt(project, milestone):
         pyplt(p_fig, filename='static/raw/chart/%s_%s_%s_%s.html'%(project, milestone, "plan", f_cur_time))
         pyplt(a_fig, filename='static/raw/chart/%s_%s_%s_%s.html'%(project, milestone, "actual",f_cur_time))
     else:
-        print("请先录入测试计划数据")    
+        logger.info("请先录入测试计划数据")    
 
-        

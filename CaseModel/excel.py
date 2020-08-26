@@ -4,16 +4,22 @@ import  xml.dom.minidom
 import xlwt
 import xlrd
 import os
+import logging
 from xlutils.copy import copy as xl_copy
+from AutoModel.models import Dependency, Result, TestDetail
+from AutoModel.report import pie_charts
+from CaseModel.models import Issue_Milestone_Count
+
+logger = logging.getLogger(__name__) 
 
 class Excel(object):
     """docstring for Excel"""
     #formatting_info=True原样打开
     def __init__(self, file_name):
         self.file_name = file_name
-        self.sum_up_sheet = "测试结果汇总"
-        
-    def write_case(self, sheet_name, *infos):
+        self.sum_up_sheet = "测试结果总览"
+
+    def write_sumup(self, project): # *issue_infos, *api_infos
         if os.path.exists(self.file_name):
             wb = xlrd.open_workbook(self.file_name)
             excel = xl_copy(wb)
@@ -23,12 +29,107 @@ class Excel(object):
             items_sum_up = ["模块名称", "用例总数", "未合入/未测试", "PASS数", "FAIL数", "PASS率", "备注"]
             for i in range(len(items_sum_up)):
                 sheet_sum_up.write(0, i, items_sum_up[i])
+        sheet_name = "汇总数据"
+        sheet_sum_up = excel.add_sheet(sheet_name)
+        issue_items = ["版本分支", "产品", "总数", "Open状态数", "Closed状态数", "项目", "备注"]
+        for i in range(len(issue_items)):
+            sheet_sum_up.write(0, i, issue_items[i])
+        issue_infos = list(Issue_Milestone_Count.objects.filter(project=project).values())
+        for i in range(len(issue_infos)):
+            issue_state_rate = {}
+            value_list = [issue_infos[i]['milestone'], issue_infos[i]['product'], issue_infos[i]['all_count'], issue_infos[i]['open_count'], issue_infos[i]['closed_count'], issue_infos[i]['project_id'], issue_infos[i]['remark']]
+            for j in range(len(value_list)):
+                sheet_sum_up.write(i+1, j, value_list[j])
+
+            issue_state_rate["Open"] = issue_infos[i]['open_count']
+            issue_state_rate["Closed"] = issue_infos[i]['closed_count']
+            pie_charts(project, "%s %s %s Issue状态"%(issue_infos[i]['project_id'], issue_infos[i]['product'], issue_infos[i]['milestone']), **issue_state_rate)
+
+        api_items = ["API总数", "可自动化总数", "未自动化总数", "自动测试", "未测试", "成功", "失败", "自动化率", "成功率", "失败率"]
+        row_index = 1 + len(issue_infos) + 1 
+        for i in range(len(api_items)):
+            sheet_sum_up.write(row_index, i, api_items[i])
+        api_case_list = list(Dependency.objects.filter(project=project).values())
+        for api in api_case_list:
+            if len(list(TestDetail.objects.filter(project=project, testResult="success", case_id=api["case_id"]).values())) > 0:
+                obj = Result.objects.filter(case_id=api["case_id"],project_id=project).update(result="PASS")
+
+        countDict = {}
+        countDict["allCount"] = len(list(Dependency.objects.filter(project=project).values()))
+        countDict["unautomatableCount"] = len(list(Dependency.objects.filter(project=project, runNum=0).values()))
+        countDict["automatableCount"] = countDict["allCount"] - countDict["unautomatableCount"]
+        countDict["passCount"] = len(list(Result.objects.filter(project=project, result="PASS").values()))
+        countDict["failCount"] = len(list(Result.objects.filter(project=project, result="FAIL").values()))
+        countDict["unTestCount"] = countDict["allCount"] - (countDict["passCount"] + countDict["failCount"])
+        countDict["autoTestCount"] = countDict["passCount"] + countDict["failCount"]
+        if countDict["allCount"] == 0:
+            countDict["autoPer"] = 0
+        else:
+            countDict["autoPer"] = '{:.2%}'.format(round(countDict["automatableCount"], 2) / round(countDict["allCount"], 2))
+        if countDict["autoTestCount"] == 0:
+            countDict["passPer"] = 0
+        else:
+            countDict["passPer"] = '{:.2%}'.format(round(countDict["passCount"], 2) / round(countDict["autoTestCount"], 2))
+        if countDict["autoTestCount"] == 0:
+            countDict["failPer"] = 0
+        else:
+            countDict["failPer"] = '{:.2%}'.format(round(countDict["failCount"], 2) / round(countDict["autoTestCount"], 2))
+        api_value_list = [countDict["allCount"], countDict["automatableCount"], countDict["unautomatableCount"], countDict["autoTestCount"], countDict["unTestCount"], countDict["passCount"], countDict["failCount"],  countDict["autoPer"], countDict["passPer"], countDict["failPer"]]
+
+        row_index = row_index + 1
+        for i in range(len(api_value_list)):
+            sheet_sum_up.write(row_index, i, api_value_list[i])
+
+        api_run_rate = {}
+        api_run_rate["Pass"] = countDict["passCount"]
+        api_run_rate["Fail"] = countDict["failCount"]
+        api_run_rate["Untest"] = countDict["unTestCount"]
+        pie_charts(project, "%s API运行结果"%project, **api_run_rate)
+
+        row_index = row_index + 1
+        single_api_items = ["API", "API功能", "run次数", "pass次数","fail次数", "未测试次数", "测试结果","失败原因"]
+        for i in range(len(single_api_items)):
+            sheet_sum_up.write(row_index, i, single_api_items[i])
+        api_infos = list(Dependency.objects.filter(project=project).values())
+        for api in api_infos:
+            dictInfo = {}
+            dictInfo["FailReason"] = ""
+            api_function = api['raw'].split("|")[0]
+            dictInfo["testTimes"] = len(list(TestDetail.objects.filter(project=project, case_id=api["case_id"]).values()))
+            dictInfo["passTimes"] = len(list(TestDetail.objects.filter(project=project, testResult="success", case_id=api["case_id"]).values()))
+            dictInfo["failTimes"] = len(list(TestDetail.objects.filter(project=project, testResult="failure", case_id=api["case_id"]).values()))
+            dictInfo["untestTimes"] = len(list(TestDetail.objects.filter(project=project, testResult="untested", case_id=api["case_id"]).values()))
+            if dictInfo["passTimes"] > 0:
+                dictInfo["TestResult"] = "PASS"
+            elif dictInfo["failTimes"] == 0:
+                dictInfo["TestResult"] = "UnTest"
+            else:
+                dictInfo["TestResult"] = "FAIL"
+            fail_ret = list(TestDetail.objects.filter(project=project, testResult="failure", case_id=api["case_id"]).values('failReason'))
+            for item in fail_ret:
+                dictInfo["FailReason"] = dictInfo["FailReason"] + item["failReason"]
+            api_single_value = [api["case_id"], api_function, dictInfo["testTimes"], dictInfo["passTimes"], dictInfo["failTimes"], dictInfo["untestTimes"], dictInfo["TestResult"], dictInfo["FailReason"]]
+            row_index = row_index + 1
+            for i in range(len(api_single_value)):
+                 sheet_sum_up.write(row_index, i, api_single_value[i])
+        excel.save(self.file_name)
+        return True
+        
+    def write_case(self, sheet_name, *infos):
+        if os.path.exists(self.file_name):
+            wb = xlrd.open_workbook(self.file_name)
+            excel = xl_copy(wb)
+        else:
+            excel = xlwt.Workbook(encoding='utf-8')
+            # sheet_sum_up = excel.add_sheet(self.sum_up_sheet)
+            # items_sum_up = ["模块名称", "用例总数", "未合入/未测试", "PASS数", "FAIL数", "PASS率", "备注"]
+            # for i in range(len(items_sum_up)):
+            #     sheet_sum_up.write(0, i, items_sum_up[i])
         sheet = excel.add_sheet(sheet_name)
         item_list = ["用例编号", "用例名称", "测试类型", "优先级", "预置条件", "测试范围", "测试步骤",  "预期结果", "自动化", "关联API", "功能开发者", "用例设计者", "测试执行者", "测试日期", "测试结果", "备注"]
         for i in range(len(item_list)):
             sheet.write(0, i, item_list[i])
         for i in range(len(infos)):
-            # print("infos[%s]: %s"%(i, infos[i]))
             value_list = [infos[i]['case_number'], infos[i]['case_name'], infos[i]['case_type'], infos[i]['priority'], infos[i]['pre_condition'], infos[i]['test_range'], infos[i]['test_steps'], infos[i]['expect_result'], infos[i]['auto'], str(infos[i]['case_id']), infos[i]['fun_developer'], infos[i]['case_designer'],infos[i]['case_executor'],str(infos[i]['test_time']),infos[i]['test_result'],infos[i]['remark']]
             for j in range(len(value_list)):
                 sheet.write(i+1, j, value_list[j])
@@ -46,7 +147,6 @@ class Excel(object):
         for i in range(len(item_list)):
             sheet.write(0, i, item_list[i])
         for i in range(len(infos)):
-            # print("infos[%s]: %s"%(i, infos[i]))
             value_list = [infos[i]['milestone'], infos[i]['issue_id'], infos[i]['issue_type'], infos[i]['name'], infos[i]['author'], infos[i]['assignees'], infos[i]['test'], infos[i]['updated'], infos[i]['result'], infos[i]['reopen'], infos[i]['tag']]
             for j in range(len(value_list)):
                 sheet.write(i+1, j, value_list[j])
@@ -64,7 +164,6 @@ class Excel(object):
         for i in range(len(item_list)):
             sheet.write(0, i, item_list[i])
         for i in range(len(infos)):
-            # print("infos[%s]: %s"%(i, infos[i]))
             if infos[i]['p_start_time'] is not None:
                 p_start_time = infos[i]['p_start_time'].strftime("%Y/%m/%d")
             else:
@@ -87,9 +186,10 @@ class Excel(object):
         excel.save(self.file_name)
         return True
 
-
-
     def write_case_count(self, module, *infos):
+        # sheet_name_list = self.read_sheet_names()
+        # if self.sum_up_sheet not in sheet_name_list:
+
         pass_count = 0
         fail_count = 0
         other_count = 0
@@ -142,11 +242,8 @@ class Excel(object):
         sheet_obj = table_obj.sheet_by_name(sheet_name)
         row_num = sheet_obj.nrows
         col_num = sheet_obj.ncols
-        # print("sheet_name: ", sheet_name)
         # titles = sheet_obj.row_values(rowx=5)  # 默认设置为1，除去title
         value_list = []
-        # value_list.append(titles)
-        #for row in range(6, row_num):
         for row in range(1, row_num):
             values = sheet_obj.row_values(rowx=row)
             value_list.append(values)
@@ -237,7 +334,6 @@ class Excel(object):
             return False, sheet_index
         new_wb = xl_copy(table_obj)
         new_sheet = new_wb.get_sheet(sheet_index)
-        # print("read_all: ", read_all)
         for m in range(len(read_all)):
             for n in range(len(read_all[m])):
                 new_sheet.write(m, n, read_all[m][n])
@@ -261,12 +357,10 @@ class Excel(object):
                 if count == len(sheet_keys):
                     undef_list.append(items)
         status, output = self.delete_all_case(sheet_name)
-        # print(status, output)
         if len(undef_list) > 0:
             for items in undef_list:
                 status, output = self.add_row_data(sheet_name, items)
-                #print(status, output)
-                #
+                
     def modify_case_status(self, sheet_name, case_num, status):
         curTime = datetime.datetime.now().strftime('%Y-%m-%d_%H:%M:%S')
         cases = self.read_sheet_content(sheet_name)

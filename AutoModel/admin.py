@@ -6,24 +6,24 @@ from AutoModel.models import Host, Dependency, Result, Source, TestDetail, ComVa
 class Result_List(admin.ModelAdmin):
     list_display = ('case_id', 'requestVars','result', 'outVars','project') # list
     search_fields = ('case_id', 'requestVars','result', 'outVars')
-    list_per_page = 10
-    list_filter = ['project','case_id']
+    list_per_page = 100
+    list_filter = ['project','result']
 
 class Source_List(admin.ModelAdmin):
     list_display = ('case_id', 'APIFunction','protocol', 'http_method', 'path', 'header', 'pathVar', 'queryParam', 'body', 'response') # list
     search_fields = ('case_id', 'APIFunction','protocol', 'http_method', 'path', 'header', 'pathVar', 'queryParam', 'body', 'response')
-    list_per_page = 10
+    list_per_page = 40
 
 class ComVar_List(admin.ModelAdmin):
     list_display = ('name', 'value','project') # list
     search_fields = ('name', 'value')
-    list_per_page = 10
+    list_per_page = 100
     list_filter = ['project']
 
 class TestDetail_List(admin.ModelAdmin):
     list_display = ('case_id', 'APIFunction','url', 'body', 'response', 'failReason', 'testTime', 'testResult', 'project') # list
     search_fields = ('case_id', 'APIFunction','url', 'body', 'response', 'failReason', 'testTime', 'testResult')
-    list_per_page = 10
+    list_per_page = 100
     list_filter = ['project', 'testResult', 'case_id']
 
 class Host_List(admin.ModelAdmin):
@@ -35,7 +35,7 @@ class Host_List(admin.ModelAdmin):
 class Dependency_List(admin.ModelAdmin):
     list_display = ('case_id','beforeCase', 'afterCase', 'outVars', 'chkVars', 'runNum', 'param_def','raw','project') # list
     search_fields = ('case_id','raw', 'beforeCase', 'afterCase', 'outVars', 'chkVars', 'runNum')
-    list_per_page = 10
+    list_per_page = 100
     list_filter = ['runNum','project']
 
 admin.site.register(Host,Host_List)
