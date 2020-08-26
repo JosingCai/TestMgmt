@@ -13,7 +13,6 @@ from xmind2testcase.utils import get_xmind_testsuite_list
 # from CaseModel.excel import Excel
 # from django.conf import settings
 import logging
-from CaseModel.testcase import TestCase as t_TestCase
 from CaseModel.models import TestCase as m_TestCase
 
 
@@ -287,7 +286,7 @@ def xmind_convert():
             test_steps = ""
             expect_result = ""
             step_count = 1
-            for step_dict in info["steps"]
+            for step_dict in info["steps"]:
                 test_steps = test_steps + "%d: %s\n" %(step_count,step_dict["action"])
                 expect_result = expect_result + "%d: %s\n" %(step_count, step_dict["expectedresults"])
                 step_count = step_count + 1
