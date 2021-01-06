@@ -505,16 +505,3 @@ class AutoSource(object):
         else:
             all_list = json2string(self.project)
         return all_list
-
-
-if __name__ == '__main__':
-    parser = argparse.ArgumentParser(version='1.1', description="Create API Info File for Auto Test")
-    parser.add_argument('-m','--module', dest="module", action="store", default="N", help="Project Name; default value is N for Not")
-    parser.add_argument('-H','--human-readable', dest="manRead", action="store", default="Y", help="[ Y/N ] Y for Yes, N for No;default value is [ Y ]")
-    args = parser.parse_args()
-
-    if args.module.upper() == "N":
-        parser.print_help()
-    else:
-        createCustomF(args.module.upper(), args.manRead)
-    

@@ -20,8 +20,7 @@ import datetime
 class Database(object):
     """docstring for Database"""
     def __init__(self):
-        self.db = pymysql.connect(host="10.0.9.33",user="admin",passwd="Yunjikeji#123",db="cloudboot360", port=3306,charset = 'utf8')
-        #self.db = pymysql.connect(host="10.0.2.1",user="root",passwd="Yunjikeji#123",db="cloudboot_2.15.6", port=3306,charset = 'utf8')
+        self.db = pymysql.connect(host="10.0.x.x",user="admin",passwd="pwd",db="dbname", port=3306,charset = 'utf8')
         self.cursor = self.db.cursor()
 
     def get_tables(self):
@@ -114,12 +113,12 @@ def get_cabitnet_id():
     idc_id = 1
     SERVER_ROOM_IDs = [1, 2, 3]
     STATUSs = ["online", "offline"]
-    url = "http://10.0.3.59/api/cloudboot/v3/server-cabinets"
+    url = "http://10.0.x.x/api/cloudboot/v3/server-cabinets"
     pre_name = random.sample(string.ascii_uppercase,1)[0]
     name = ''.join(random.sample(string.digits, 3))
     server_room_id = random.choice(SERVER_ROOM_IDs)
     status = random.choice(STATUSs)
-    headers = headers = {"Accept": "application/json", "Authorization": "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiLolKHlp6PooYwiLCJ1c2VySWQiOiI3ZWQ2NmE1MS0zZWVlLTQ2YzItOTE1NS1mZWY1YzVmNWIzOTIiLCJuYW1lIjoi6JSh5aej6KGMIiwibG9naW5JZCI6ImNhaWppYW94aW5nIiwibG9naW5OYW1lIjoiY2Fpamlhb3hpbmciLCJ0ZW5hbnRJZCI6ImRlZmF1bHQiLCJ0aW1lb3V0IjoyMTYwMCwiZXhwIjoxNTk2MjA1MTM3LCJjcmVhdFRpbWUiOjE1OTYxODM1Mzc3MTcsInRlbmFudE5hbWUiOiLnrqHnkIbnp5_miLcifQ.kGxJUizco7wRj0ik0K-CeQsO79U-qJL2eiel0FVjkI8"}
+    headers = headers = {"Accept": "application/json", "Authorization": "xxx"}
     data = {'current': 2, 'height': 42, 'max_power': 2, 'name': name, 'pre_name': pre_name, 'remark': 'auto', 'server_room_id': server_room_id, 'status': status}
     resp = requests.post(url, headers=headers, json=data, verify=False)
     if not resp.ok:
@@ -189,7 +188,7 @@ def device_sql(number):
 
 def device_location_sql(number):
     handle = Database()
-    SNs = ["3Q28132", "2102310LXP10E3101791"]
+    SNs = ["xxxxxxx1", "xxxxxxxxx2"]
     CATEGORYs = ["Cable/Interconnect", "Entity Presence", "ipmi", "web"]
     SEVERITYs = ["critical", "serious", "disaster", "info"]
     SOURCE_TIMEs = ["2020-05-21 11:38:18", "2020-07-22 10:48:20", "2020-07-07 10:38:18"]
@@ -200,15 +199,14 @@ def device_location_sql(number):
     ARCHs = ["aarch64", "x86_64" ,"ppc64"]
     CHASSIS_TYPEs = ["unknown", "rack_server", "blade_server", "minicomputer"]
     LEVELs =  [1,2,3]
-    region_id
     REGION_IDs = [1, 2]
     SOURCEs = ["import", "bootos", "ipmi_discovery", "auto_creation"]
     P_STATUSs = ["power_on", "power_off", "unknown"]
     D_STATUSs = ["online", "offline"]
-    a1=(2020,7,1,0,0,0,0,0,0)
-    a2=(2020,7,22,23,59,59,0,0,0)
-    start=time.mktime(a1)
-    end=time.mktime(a2)
+    a1 = (2020,7,1,0,0,0,0,0,0)
+    a2 = (2020,7,22,23,59,59,0,0,0)
+    start = time.mktime(a1)
+    end = time.mktime(a2)
     for ID in range(number):
         SN = ''.join(random.sample(string.ascii_letters + string.digits, 20))
         asset_number = SN 
@@ -219,9 +217,9 @@ def device_location_sql(number):
         source_id = random.randint(0,100000)
         message = ''.join(random.sample(string.ascii_letters + string.digits, 12))
         #source_time = random.choice(SOURCE_TIMEs)
-        t=random.randint(start,end)
-        date_touple=time.localtime(t)
-        source_time=time.strftime("%Y-%m-%d %H:%M:%S", date_touple)
+        t =random.randint(start,end)
+        date_touple = time.localtime(t)
+        source_time = time.strftime("%Y-%m-%d %H:%M:%S", date_touple)
         status = random.choice(STATUSs)
         source_name = random.choice(SOURCE_NAMEs)
         mfg = random.choice(MFGs)

@@ -448,8 +448,6 @@ class InterfaceInfo(models.Model):
     update_time = models.DateTimeField(
         auto_now=True, blank=True, null=True, verbose_name="修改时间")
 
-    # 修改时间
-
     class Meta:
         db_table = 'interface_info'
 

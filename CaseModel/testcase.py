@@ -216,26 +216,26 @@ def xmind(case_type="testcase_json"):
     logger.info('Start to convert XMind file: %s' % xmind_file)
     if case_type == "testcase_json":
         testcase_json_file = xmind_testcase_to_json_file(xmind_file)
-        logger.info('Convert XMind file to testcase json file successfully: %s' % testcase_json_file)
+        logger.info('Convert XMind file to testcase json file successfully: %s', testcase_json_file)
     elif case_type == "zentao_csv":
         zentao_csv_file = xmind_to_zentao_csv_file(xmind_file)
-        logger.info('Convert XMind file to zentao csv file successfully: %s' % zentao_csv_file)
+        logger.info('Convert XMind file to zentao csv file successfully: %s', zentao_csv_file)
     elif case_type == "testlink_xml":
         testlink_xml_file = xmind_to_testlink_xml_file(xmind_file)
-        logger.info('Convert XMind file to testlink xml file successfully: %s' % testlink_xml_file)
+        logger.info('Convert XMind file to testlink xml file successfully: %s', testlink_xml_file)
     elif case_type == "testsuite_json":
         testsuite_json_file = xmind_testsuite_to_json_file(xmind_file)
-        logger.info('Convert XMind file to testsuite json file successfully: %s' % testsuite_json_file)
+        logger.info('Convert XMind file to testsuite json file successfully: %s', testsuite_json_file)
     elif case_type == "testsuites":
         testsuites = get_xmind_testsuite_list(xmind_file)
-        logger.info('Convert XMind to testsuits dict data:\n%s' % json.dumps(testsuites, indent=2, separators=(',', ': '), ensure_ascii=False))
+        logger.info('Convert XMind to testsuits dict data:\n%s',json.dumps(testsuites, indent=2, separators=(',', ': '), ensure_ascii=False))
     elif case_type == "testcases":
         testcases = get_xmind_testcase_list(xmind_file)
-        logger.info('Convert Xmind to testcases dict data:\n%s' % json.dumps(testcases, indent=4, separators=(',', ': ')))
+        logger.info('Convert Xmind to testcases dict data:\n%s', json.dumps(testcases, indent=4, separators=(',', ': ')))
     elif case_type == "json":
         xmind_file = 'xmind_testcase_template.xmind'
         workbook = xmind.load(xmind_file)
-        logger.info('Convert XMind to Json data:\n%s' % json.dumps(workbook.getData(), indent=2, separators=(',', ': '), ensure_ascii=False))
+        logger.info('Convert XMind to Json data:\n%s', json.dumps(workbook.getData(), indent=2, separators=(',', ': '), ensure_ascii=False))
 
     logger.info('Finished conversion, Congratulations!')
     return True

@@ -265,28 +265,3 @@ def sync_case_dep(request):
 def login_info(request):
     context = {}
     return render(request, 'index.html', context)
-
-def login(request):
-    if request.method == "POST":
-        user_name = request.POST.get('form_user_name', '')
-        # 对应前端的<input name="form_user_name">
-        password = request.POST.get('form_password', '')
-        # 对应前端的<input name="form_password">
-        user = auth.authenticate(username=user_name, password=password)
-        if user is not None and user.is_active:
-            auth.login(request, user)
-            request.session['user'] = user_name
-            return redirect('/home/')
-        else:
-            return render(request, 'login.html', {'error': '用户名或密码错误！'})
-    return render(request, 'login.html')
-
-@login_required
-# 要求用户登录
-def home(request):
-    return render(request, "home.html")
-
-@login_required
-def logout(request):
-    auth.logout(request)
-    return render(request, 'login.html')
