@@ -9,7 +9,7 @@ import shutil
 import argparse
 import xlwt
 import xlrd
-import importlib,sys 
+import importlib
 import datetime
 from xlutils.copy import copy as xl_copy
 from CaseModel.models import Issue_Tag_Count, Issue_Milestone_Count, Issue_Info

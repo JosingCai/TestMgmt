@@ -18,10 +18,10 @@ LogPath = "log"
 
 class RawAPI(object):
     """docstring for RawAPI"""
-    def __init__(self,  module, apiString):
+    def __init__(self, module, apiString):
         self.apiDict = {}
         apiList = apiString.split("|")
-        logger.info("apiString: %s" %apiString)
+        logger.info("apiString: %s", apiString)
         try:
             self.apiDict["APIFunction"] = apiList[0]
             self.apiDict["http_method"] = apiList[2]
@@ -43,8 +43,8 @@ class RawAPI(object):
             else:
                 self.apiDict["response"] = apiList[8]
         except Exception as e:
-            logger.warning("exception: %s" %e)
-            logger.info("apiList: %s" %apiList)
+            logger.warning("exception: %s", e)
+            logger.info("apiList: %s", apiList)
         self.apiDict["section"] = "%s_%s"%(self.apiDict["http_method"], self.apiDict["path"])
         host_ret = list(Host.objects.filter(project_id=module).values())
         self.hostDict = host_ret[0]
@@ -55,8 +55,8 @@ class RawAPI(object):
             else:
                 headers["access-token"] = self.hostDict["token"]
         self.hostDict["headers"] = headers
-        logger.debug("apiDict: %s" %self.apiDict)
-        logger.debug("hostDict: %s" %self.hostDict)
+        logger.debug("apiDict: %s", self.apiDict)
+        logger.debug("hostDict: %s", self.hostDict)
 
 class API(RawAPI):
     """docstring for API"""
@@ -67,7 +67,7 @@ class API(RawAPI):
         self.logFile = "%s-API-%s.log"%(self.module, today)
         case_ret = list(Dependency.objects.filter(case_id=self.apiDict["section"]).values())
         self.case_info = case_ret[0]
-        logger.debug("case_info: %s" %self.case_info)
+        logger.debug("case_info: %s", self.case_info)
         beforeCase = self.case_info["beforeCase"]
         afterCase = self.case_info["afterCase"]
         runNum = self.case_info["runNum"]
@@ -89,7 +89,7 @@ class API(RawAPI):
     
     def expectAPI(self):
         if self.runNum == 0:
-            logger.warning("%s has 0 runNum test ..."%self.apiDict["section"])
+            logger.warning("%s has 0 runNum test ...", self.apiDict["section"])
             response = {"status": "untested", "message": "未测试"}
             url = self.getRawUrl()
             data = ""
@@ -112,7 +112,7 @@ class API(RawAPI):
                 out_ret = list(Result.objects.filter(case_id=depID, project=self.module).values())
                 if out_ret:
                     outVars = out_ret[0]
-                    logger.debug("befOutVars: %s" %outVars)
+                    logger.debug("befOutVars: %s", outVars)
                     if outVars and (len(outVars) != 0) and len(outVars['outVars'])>0:
                         depOutVars.update(eval(outVars['outVars']))
         all_param_def = []
@@ -238,7 +238,7 @@ class API(RawAPI):
                             depOutVars[Key] = [-1, 65536] + eval(keyVar['value'])
                         else:
                             depOutVars[Key] = [-1, 65536] + int_10
-        logger.debug("depOutVars: %s" %depOutVars)
+        logger.debug("depOutVars: %s", depOutVars)
         return True, depOutVars
 
     def getUrlPath(self, url, **depOutVars):
@@ -260,7 +260,7 @@ class API(RawAPI):
                     URL = url.replace("{%s}"%Key, str(depOutVars[Key]))
                     urlList.append(URL)
 
-        logger.debug("urlList: %s" %urlList)
+        logger.debug("urlList: %s", urlList)
         return True, urlList
 
     def getQueryStr(self, dep_mode="no", **depOutVars):
@@ -289,12 +289,12 @@ class API(RawAPI):
                     queryString = Key + "=" + str(depOutVars[Key])
                     queryStrList.append(queryString)
 
-            logger.debug("productList length: %d" %len(productList))
-            logger.debug("keyList length: %d" %len(keyList))
+            logger.debug("productList length: %d", len(productList))
+            logger.debug("keyList length: %d", len(keyList))
 
             if len(productList) > 6:
-                logger.debug("More Value: %s" %productList)
-                logger.debug("More Key : %s" %keyList)
+                logger.debug("More Value: %s", productList)
+                logger.debug("More Key : %s", keyList)
                 #productList = random.sample(productList,6)
                 productList = productList[:6]
                 keyList = keyList[:6]
@@ -311,8 +311,8 @@ class API(RawAPI):
                         else:
                             String = String + "&" + keyList[i] + "=" + str(info[i])
                 queryStrList.append(String)
-        logger.debug("queryStrList: %s" %queryStrList)
-        logger.debug("queryStrList length: %d" %len(queryStrList))
+        logger.debug("queryStrList: %s", queryStrList)
+        logger.debug("queryStrList length: %d", len(queryStrList))
         return True, queryStrList
 
     def chkUniVar(self, name):
@@ -357,7 +357,7 @@ class API(RawAPI):
                     Value = forList[j][i]
                     infoDict[Key] = Value
                 bodyList.append(infoDict)
-        logger.debug("bodyList: %s" %bodyList)
+        logger.debug("bodyList: %s", bodyList)
         return True, bodyList
 
     def assembleData(self, dep_mode="no"):
@@ -428,7 +428,7 @@ class API(RawAPI):
             resp = requests.patch(url, headers=self.hostDict["headers"], json=data, verify=False)
         elif self.apiDict["http_method"] == "head":
             resp = requests.head(url)
-            logger.debug("resp.headers: %s" %resp.headers)
+            logger.debug("resp.headers: %s", resp.headers)
         curTime=datetime.datetime.now().strftime('%Y-%m-%d_%H:%M:%S')
 
         if data:
@@ -439,23 +439,23 @@ class API(RawAPI):
                 obj = Result(case_id=self.apiDict["section"],requestVars=data, project_id=self.module)
                 obj.save()
         if not resp.ok:
-            logger.warning("resp.ok: %s" %resp.ok)
+            logger.warning("resp.ok: %s", resp.ok)
             try:
                 info = resp.json()
-                logger.debug("response: %s" %info)
+                logger.debug("response: %s", info)
                 
                 if ("message" in info) and ("status" in info):
                     response = {"status": info["status"], "message": "执行失败", "failReason": info["message"]}
                 elif ("resultMessage" in info) and ("isSuccess" in info):
                     response = {"status": info["isSuccess"], "message": "执行失败", "failReason": info["resultMessage"]}
             except Exception as e:
-                logger.error("runMethod 1 exception: %s" %e)
+                logger.error("runMethod 1 exception: %s", e)
                 response = {"status": "failure", "message": "执行失败", "failReason": resp.content}
             return False, response
         try:
             response = resp.json()
         except Exception as e:
-            logger.error("runMethod 2 exception: %s" %e)
+            logger.error("runMethod 2 exception: %s", e)
             response = {"status": "success", "message": "执行成功", "failReason": " "}
         if "status" not in response:
             if isinstance(response,list):
@@ -487,7 +487,7 @@ class API(RawAPI):
         return True
 
     def saveOutVar(self, response):
-        logger.debug("response: %s" %response)
+        logger.debug("response: %s", response)
         outVarsDict = {}
         ret_list = list(Dependency.objects.filter(case_id=self.apiDict["section"]).values())
         if len(ret_list) == 0:
@@ -508,7 +508,7 @@ class API(RawAPI):
                         try:
                             length = len(tmp[subItems[0]])
                         except Exception as e:
-                            logger.error("saveOutVar %s exception: %s"%(item, e))
+                            logger.error("saveOutVar %s exception: %s", item, e)
                             return False, "Get Vars to Output Failed"
 
                         for index in range(length):
@@ -525,7 +525,7 @@ class API(RawAPI):
                             try:
                                 tmp = tmp[item]
                             except Exception as e:
-                                logger.error("saveOutVar %s exception: %s"%(item, e))
+                                logger.error("saveOutVar %s exception: %s", item, e)
                                 return False, "Get Vars to Output Failed"
             else:
                 tmp = tmp[outVarItems[Key]]
@@ -545,7 +545,7 @@ class API(RawAPI):
                             else:
                                 items.append(item)
                         except Exception as e:
-                            logger.error("saveOutVar %s exception: %s"%(item, e))
+                            logger.error("saveOutVar %s exception: %s", item, e)
                 outVarsDict[Key] = items
             else:
                 if isinstance(tmp, int):
@@ -595,7 +595,7 @@ class API(RawAPI):
                             else:
                                 tmp = tmp[item]
                         except Exception as e:
-                            logger.error("chkItem 1 exception: %s" %e)
+                            logger.error("chkItem 1 exception: %s", e)
                             tmp = "Not Found Var: %s"%item
 
                 if isinstance(tmp, list):
@@ -607,7 +607,7 @@ class API(RawAPI):
                             try:
                                 items.append(item.encode("utf-8"))
                             except Exception as e:
-                                logger.error("chkItem 2 exception: %s" %e)
+                                logger.error("chkItem 2 exception: %s", e)
                                 items.append("")
                     chkVars[Key] = items
                 else:
@@ -617,12 +617,12 @@ class API(RawAPI):
                         try:
                             chkVars[Key] = tmp.encode("utf-8") 
                         except Exception as e:
-                            logger.error("chkItem 3 exception: %s" %e)
+                            logger.error("chkItem 3 exception: %s", e)
                             chkVars[Key] = tmp
             chkInfo.update(chkVars)
 
         Keys = reqDict.keys() 
-        logger.debug("reqDict: %s" %reqDict)
+        logger.debug("reqDict: %s", reqDict)
         for Key in Keys:
             if Key not in noChkVars:
                 if Key not in chkInfo:
@@ -638,7 +638,7 @@ class API(RawAPI):
                 else:
                     passList.append(Key)
         # if DEBUG:
-        logger.debug("passList: %s" %passList)
+        logger.debug("passList: %s", passList)
         return flag, cmpDict
 
     def analysisReponse(self, url, data, response):
@@ -687,9 +687,9 @@ def runAPI(module, apiString, number=1, mode="single", chkMode="no", dep_mode="n
     api = API(module, apiString)
     if api.runNum != 0 and api.runNum != 1:
         number = api.runNum
-    logger.debug("Run Mode: %s, Run Number: %d" %(mode, number))
+    logger.debug("Run Mode: %s, Run Number: %d", mode, number)
     status, output = api.expectAPI()
-    logger.debug("status: %s,  output: %s" %(status, output))
+    logger.debug("status: %s,  output: %s" , status, output)
     if status:
         retDict = {}
         retDict["case_id"] = api.apiDict["section"]
@@ -712,7 +712,7 @@ def runAPI(module, apiString, number=1, mode="single", chkMode="no", dep_mode="n
 
     if mode == "single":
         status, reqList = api.assembleData(dep_mode="yes")
-        logger.debug("single reqList: %s" %reqList)
+        logger.debug("single reqList: %s", reqList)
         reqList = [reqList[0]]
     elif number != 1:
         status, reqList = api.assembleData(dep_mode="yes")
@@ -729,9 +729,9 @@ def runAPI(module, apiString, number=1, mode="single", chkMode="no", dep_mode="n
     if not status:
         return False, [{"case_id":api.apiDict["section"], "response": reqList}]
     
-    logger.debug("reqList: %s" %reqList)
+    logger.debug("reqList: %s", reqList)
     resultList = []
-    logger.debug("AfterCase: %s, CheckMode: %s, Mode: %s" %(api.chkIDs, chkMode, mode))
+    logger.debug("AfterCase: %s, CheckMode: %s, Mode: %s", api.chkIDs, chkMode, mode)
     if (len(api.chkIDs) != 0 or chkMode == "no") and mode != "single":
 
         chkID = ""
@@ -807,7 +807,7 @@ def runAPI(module, apiString, number=1, mode="single", chkMode="no", dep_mode="n
                     return False, [delDict]
             resultList.append(retDict)
     else:
-        logger.debug("Threading Mode: %s" %api.hostDict["threading"])
+        logger.debug("Threading Mode: %s", api.hostDict["threading"])
         if api.hostDict["threading"] == "False":
             for info in reqList:
                 status, retDict = threadRun(api, info["url"], info["body"])
@@ -815,7 +815,7 @@ def runAPI(module, apiString, number=1, mode="single", chkMode="no", dep_mode="n
         else:
             threads = []
             length = len(reqList)
-            logger.debug("Concurrent Times: %d" %length)
+            logger.debug("Concurrent Times: %d", length)
             for i in range(length):
                 t = MyThread(threadRun, (api, reqList[i]["url"], reqList[i]["body"]))
                 threads.append(t)
@@ -835,7 +835,7 @@ def runTargetAPI(module, method_API, number=1, mode="loop"):
         return False, [{"case_id": method_API, "response": "Get API raw info failed, Please Check it ~ "}]
     status, output = runAPI(module, apiString, number, mode=mode, chkMode="yes")
     if not status:
-        logger.error("run output: %s" %output)
+        logger.error("run output: %s", output)
     return True, output
 
 def runAPIs(module):
@@ -845,7 +845,7 @@ def runAPIs(module):
         case_id = item["case_id"]
         run_result = list(Result.objects.filter(case_id=case_id, project=module).values())
         if len(run_result) > 0:
-            logger.info("Already run: %s" %case_id)
+            logger.info("Already run: %s", case_id)
             continue
         status, loopList = runTargetAPI(module, case_id, mode="single")
         resultList = resultList + loopList

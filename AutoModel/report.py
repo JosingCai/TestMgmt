@@ -1,4 +1,5 @@
 #from AutoModel.models import Dependency, Result, TestDetail, TestReport
+from __future__ import absolute_import
 from CaseModel.models import Issue_Milestone_Count
 
 from HTMLTable import HTMLTable
